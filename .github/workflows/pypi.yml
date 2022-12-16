@@ -17,7 +17,7 @@ jobs:
 
       - name: Get release number from git tag (release) or latest (branch)
         run: |
-          echo "version=4.0.0-dev2" >> $GITHUB_OUTPUT
+          echo "version=3.0.2" >> $GITHUB_OUTPUT
         id: tref
 
       - name: Fetch PyPi Package from release
