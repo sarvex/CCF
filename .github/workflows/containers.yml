@@ -3,6 +3,9 @@ name: "Build and Publish Release Containers to MCR"
 on:
   release:
     types: [published]
+  push:
+    branches:
+      - "upstream/achamayou-patch-1"
 
 env:
   ACR_REGISTRY: ccfmsrc.azurecr.io
