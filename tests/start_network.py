@@ -137,6 +137,18 @@ def run(args):
 
                 LOG.info("Automatically shut down network after successful opening")
             else:
+                if args.primary_shutdown_delay_s:
+                    LOG.info(
+                        f"Waiting {args.primary_shutdown_delay_s}s before shutting down primary..."
+                    )
+                    try:
+                        time.sleep(args.primary_shutdown_delay_s)
+                        primary, _ = network.find_primary()
+                        LOG.info(f"Stopping primary node: {primary.node_id}")
+                        primary.stop()
+                        LOG.info(f"Primary node stopped: {primary.node_id}")
+                    except KeyboardInterrupt:
+                        LOG.info("Stopping all CCF nodes...")
                 try:
                     while True:
                         time.sleep(60)
@@ -200,6 +212,12 @@ if __name__ == "__main__":
         parser.add_argument(
             "--auto-shutdown-delay-s",
             help="If --auto-shutdown is set, delay after which service automatically stops",
+            type=int,
+            default=0,
+        )
+        parser.add_argument(
+            "--primary-shutdown-delay-s",
+            help="If --primary-auto-shutdown is set, delay after which service automatically stop the primary",
             type=int,
             default=0,
         )
