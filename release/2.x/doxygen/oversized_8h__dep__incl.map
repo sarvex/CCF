@@ -1,0 +1,25 @@
+<map id="src/ds/oversized.h" name="src/ds/oversized.h">
+<area shape="rect" id="node1" title=" " alt="" coords="421,5,560,31"/>
+<area shape="rect" id="node2" href="$common_2configuration_8h.html" title=" " alt="" coords="284,79,487,104"/>
+<area shape="rect" id="node4" href="$host_2main_8cpp.html" title=" " alt="" coords="699,313,837,339"/>
+<area shape="rect" id="node11" href="$enclave_2enclave_8h.html" title=" " alt="" coords="520,709,683,735"/>
+<area shape="rect" id="node18" href="$interface_8h.html" title=" " alt="" coords="511,79,681,104"/>
+<area shape="rect" id="node3" href="$host_2configuration_8h.html" title=" " alt="" coords="310,240,485,265"/>
+<area shape="rect" id="node5" href="$node__call__types_8h.html" title=" " alt="" coords="193,152,359,192"/>
+<area shape="rect" id="node6" href="$call__types_8h.html" title=" " alt="" coords="103,240,286,265"/>
+<area shape="rect" id="node7" href="$common__endpoint__registry_8cpp.html" title=" " alt="" coords="43,387,213,427"/>
+<area shape="rect" id="node8" href="$wrap_8cpp.html" title=" " alt="" coords="158,313,277,339"/>
+<area shape="rect" id="node9" href="$resharing_8h.html" title=" " alt="" coords="421,394,576,419"/>
+<area shape="rect" id="node14" href="$member__frontend_8h.html" title=" " alt="" coords="237,387,397,427"/>
+<area shape="rect" id="node15" href="$serialization_8h.html" title=" " alt="" coords="403,313,600,339"/>
+<area shape="rect" id="node10" href="$node__state_8h.html" title=" " alt="" coords="531,563,696,588"/>
+<area shape="rect" id="node13" href="$gov__effects_8h.html" title=" " alt="" coords="572,636,764,661"/>
+<area shape="rect" id="node12" href="$enclave_2main_8cpp.html" title=" " alt="" coords="521,783,681,808"/>
+<area shape="rect" id="node16" href="$node__frontend_8h.html" title=" " alt="" coords="651,394,861,419"/>
+<area shape="rect" id="node17" href="$jwt__key__auto__refresh_8h.html" title=" " alt="" coords="651,475,818,515"/>
+<area shape="rect" id="node19" href="$host_2enclave_8h.html" title=" " alt="" coords="911,159,1051,185"/>
+<area shape="rect" id="node22" href="$handle__ring__buffer_8h.html" title=" " alt="" coords="509,152,662,192"/>
+<area shape="rect" id="node23" href="$process__launcher_8h.html" title=" " alt="" coords="686,159,887,185"/>
+<area shape="rect" id="node20" href="$sig__term_8h.html" title=" " alt="" coords="905,240,1052,265"/>
+<area shape="rect" id="node21" href="$ticker_8h.html" title=" " alt="" coords="706,240,830,265"/>
+</map>

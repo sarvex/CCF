@@ -1,0 +1,12 @@
+<map id="http::HttpRpcContext" name="http::HttpRpcContext">
+<area shape="rect" id="node1" title=" " alt="" coords="1148,92,1307,117"/>
+<area shape="rect" id="node2" href="$classccf_1_1RpcContextImpl.html" title=" " alt="" coords="947,92,1099,117"/>
+<area shape="rect" id="node3" href="$classccf_1_1RpcContext.html" title="Describes the currently executing RPC." alt="" coords="590,5,713,31"/>
+<area shape="rect" id="node4" title=" " alt="" coords="575,55,728,95"/>
+<area shape="rect" id="node5" href="$structccf_1_1SessionContext.html" title=" " alt="" coords="293,63,443,88"/>
+<area shape="rect" id="node6" title=" " alt="" coords="5,63,172,88"/>
+<area shape="rect" id="node7" href="$classccf_1_1ClaimsDigest.html" title=" " alt="" coords="584,120,719,145"/>
+<area shape="rect" id="node8" title=" " alt="" coords="556,171,747,211"/>
+<area shape="rect" id="node9" title=" " alt="" coords="325,179,411,204"/>
+<area shape="rect" id="node10" title=" " alt="" coords="19,171,158,211"/>
+</map>
