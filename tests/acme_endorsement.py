@@ -152,20 +152,18 @@ def register_endorsed_hosts(args, network_name, dns_mgmt_address):
     endorsed_hosts = [
         node.rpc_interfaces["acme_endorsed_interface"].host for node in args.nodes
     ]
-    data = str(
-        json.dumps(
-            {
-                "host": network_name,
-                "addresses": endorsed_hosts,
-            }
-        )
+    data = json.dumps(
+        {
+            "host": network_name,
+            "addresses": endorsed_hosts,
+        }
     ).encode("utf-8")
     urllib.request.urlopen(f"http://{dns_mgmt_address}/add-a", data=data)
 
     # Disable the default IPv6 entry
-    data = str(json.dumps({"ip": ""})).encode("utf-8")
+    data = json.dumps({"ip": ""}).encode("utf-8")
     urllib.request.urlopen(
-        "http://" + dns_mgmt_address + "/set-default-ipv6", data=data
+        f"http://{dns_mgmt_address}/set-default-ipv6", data=data
     )
 
 
@@ -196,9 +194,9 @@ def get_without_cert_check(url):
 
 
 def get_pebble_ca_certs(mgmt_address):
-    ca = get_without_cert_check("https://" + mgmt_address + "/roots/0")
+    ca = get_without_cert_check(f"https://{mgmt_address}/roots/0")
     intermediate = get_without_cert_check(
-        "https://" + mgmt_address + "/intermediates/0"
+        f"https://{mgmt_address}/intermediates/0"
     )
     return ca, intermediate
 

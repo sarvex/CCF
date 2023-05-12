@@ -675,9 +675,7 @@ def find_recovery_tx_seqno(node):
 
 def check_snapshots(args, network):
     primary, _ = network.find_primary()
-    seqno = find_recovery_tx_seqno(primary)
-
-    if seqno:
+    if seqno := find_recovery_tx_seqno(primary):
         # Check that primary node has produced a snapshot. The wait timeout is larger than the
         # signature interval, so the snapshots should become available within the timeout.
         assert args.sig_ms_interval < 3000
@@ -778,7 +776,7 @@ def run(args):
                         ccf.ledger.WELL_KNOWN_SINGLETON_TABLE_KEY
                     ]
                 )["status"]
-                if service_status == "Opening" or service_status == "Recovering":
+                if service_status in ["Opening", "Recovering"]:
                     LOG.info(
                         f"New ledger chunk found for service {service_status.lower()} at {seqno}"
                     )

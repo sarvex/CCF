@@ -340,9 +340,7 @@ def get_curve(ca_file):
 
 def unpack_seqno_or_view(data):
     (value,) = struct.unpack("<q", data)
-    if value == -sys.maxsize - 1:
-        return None
-    return value
+    return None if value == -sys.maxsize - 1 else value
 
 
 def cose_protected_headers(request_path, created_at=None):
@@ -392,7 +390,7 @@ class CurlClient:
         self.cose_signing_auth = cose_signing_auth
         self.common_headers = common_headers or {}
         self.ca_curve = get_curve(self.ca)
-        self.protocol = kwargs.get("protocol") if "protocol" in kwargs else "https"
+        self.protocol = kwargs.get("protocol", "https")
         self.extra_args = []
         if kwargs.get("http2"):
             self.extra_args.append("--http2")
@@ -415,7 +413,7 @@ class CurlClient:
 
             headers = {}
             if self.common_headers is not None:
-                headers.update(self.common_headers)
+                headers |= self.common_headers
 
             headers.update(request.headers)
 
@@ -446,25 +444,31 @@ class CurlClient:
                     nf.write(msg_bytes)
                     nf.flush()
                     content_path = f"@{nf.name}"
-                if not "content-type" in headers and request.body:
+                if "content-type" not in headers and request.body:
                     headers["content-type"] = content_type
 
             cmd = ["curl"]
 
             if self.cose_signing_auth:
-                pre_cmd = ["ccf_cose_sign1"]
                 phdr = cose_protected_headers(request.path, self.created_at_override)
                 phdr.update(cose_header_parameters_override or {})
-                pre_cmd.extend(["--ccf-gov-msg-type", phdr["ccf.gov.msg.type"]])
+                pre_cmd = ["ccf_cose_sign1", *["--ccf-gov-msg-type", phdr["ccf.gov.msg.type"]]]
                 created_at = datetime.utcfromtimestamp(phdr["ccf.gov.msg.created_at"])
                 pre_cmd.extend(["--ccf-gov-msg-created_at", created_at.isoformat()])
                 if "ccf.gov.msg.proposal_id" in phdr:
                     pre_cmd.extend(
                         ["--ccf-gov-msg-proposal_id", phdr["ccf.gov.msg.proposal_id"]]
                     )
-                pre_cmd.extend(["--signing-key", self.cose_signing_auth.key])
-                pre_cmd.extend(["--signing-cert", self.cose_signing_auth.cert])
-                pre_cmd.extend(["--content", content_path.strip("@")])
+                pre_cmd.extend(
+                    [
+                        "--signing-key",
+                        self.cose_signing_auth.key,
+                        "--signing-cert",
+                        self.cose_signing_auth.cert,
+                        "--content",
+                        content_path.strip("@"),
+                    ]
+                )
                 headers["content-type"] = CONTENT_TYPE_COSE
 
             url = f"{self.protocol}://{self.hostname}{request.path}"
@@ -476,9 +480,8 @@ class CurlClient:
 
             if self.cose_signing_auth:
                 cmd.extend(["--data-binary", "@-"])
-            else:
-                if request.body is not None:
-                    cmd.extend(["--data-binary", content_path])
+            elif request.body is not None:
+                cmd.extend(["--data-binary", content_path])
 
             # Set requested headers first - so they take precedence over defaults
             for k, v in headers.items():
@@ -487,14 +490,10 @@ class CurlClient:
             if self.ca:
                 cmd.extend(["--cacert", self.ca])
             if self.session_auth:
-                cmd.extend(["--key", self.session_auth.key])
-                cmd.extend(["--cert", self.session_auth.cert])
-
-            for arg in self.extra_args:
-                cmd.append(arg)
-
+                cmd.extend(["--key", self.session_auth.key, "--cert", self.session_auth.cert])
+            cmd.extend(iter(self.extra_args))
             cmd_s = " ".join(cmd)
-            env = {k: v for k, v in os.environ.items()}
+            env = dict(os.environ)
 
             if self.cose_signing_auth:
                 pre_cmd_s = " ".join(pre_cmd)
@@ -527,19 +526,7 @@ class CurlClient:
     @staticmethod
     def extra_headers_count(http2=False):
         # curl inserts the following headers in every request
-        if http2:
-            #  :method: GET/POST
-            #  :authority: <address>
-            #  :scheme: https
-            #  :path: /path
-            #  accept: */*
-            #  user-agent: curl/<version>
-            return 6
-        else:
-            #  host: <address>
-            #  user-agent: curl/<version>
-            #  accept: */*
-            return 3
+        return 6 if http2 else 3
 
 
 class HttpxClient:
@@ -576,8 +563,7 @@ class HttpxClient:
             self.protocol = kwargs.get("protocol")
             kwargs.pop("protocol")
         self.session = httpx.Client(verify=self.ca, cert=cert, **kwargs)
-        sig_auth = signing_auth or cose_signing_auth
-        if sig_auth:
+        if sig_auth := signing_auth or cose_signing_auth:
             with open(sig_auth.cert, encoding="utf-8") as cert_file:
                 self.key_id = (
                     x509.load_pem_x509_certificate(
@@ -595,7 +581,7 @@ class HttpxClient:
     ):
         extra_headers = {}
         if self.common_headers is not None:
-            extra_headers.update(self.common_headers)
+            extra_headers |= self.common_headers
 
         extra_headers.update(request.headers)
 
@@ -636,7 +622,7 @@ class HttpxClient:
                 request_body = json.dumps(request.body).encode()
                 content_type = CONTENT_TYPE_JSON
 
-            if not "content-type" in request.headers and len(request.body) > 0:
+            if "content-type" not in request.headers and len(request.body) > 0:
                 extra_headers["content-type"] = content_type
 
         if self.cose_signing_auth is not None and request.http_verb != "GET":
@@ -693,22 +679,7 @@ class HttpxClient:
     @staticmethod
     def extra_headers_count(http2=False):
         # httpx inserts the following headers in every request
-        if http2:
-            #  :method: GET/POST
-            #  :authority: <address>
-            #  :scheme: https
-            #  :path: /path
-            #  accept: */*
-            #  accept-encoding: gzip, deflate, br
-            #  user-agent: python-httpx/<version>
-            return 7
-        else:
-            #  host: <address>
-            #  accept: */*
-            #  accept-encoding: gzip, deflate, br
-            #  connection: keep-alive
-            #  user-agent: python-httpx/<version>
-            return 5
+        return 7 if http2 else 5
 
 
 class RawSocketClient:
@@ -811,7 +782,7 @@ class RawSocketClient:
     ):
         extra_headers = {}
         if self.common_headers is not None:
-            extra_headers.update(self.common_headers)
+            extra_headers |= self.common_headers
 
         extra_headers.update(request.headers)
 
@@ -837,10 +808,10 @@ class RawSocketClient:
                 content_type = CONTENT_TYPE_JSON
             content_length = len(request_body)
 
-            if not "content-type" in request.headers and len(request.body) > 0:
+            if "content-type" not in request.headers and len(request.body) > 0:
                 extra_headers["content-type"] = content_type
 
-        if not "content-length" in extra_headers:
+        if "content-length" not in extra_headers:
             extra_headers["content-length"] = content_length
 
         if self.signing_details is not None:

@@ -14,8 +14,7 @@ START_DEPTH = 1
 
 class MinimalRstGenerator:
     def __init__(self):
-        self._lines = [".."]
-        self._lines.append("  This is an auto-generated file. DO NOT EDIT.\n")
+        self._lines = ["..", "  This is an auto-generated file. DO NOT EDIT.\n"]
 
     def _add_lines(self, lines):
         self._lines.extend(lines)
@@ -90,14 +89,15 @@ def print_object(output, obj, depth=0, required_entries=None, additional_desc=No
                 assert (
                     "allOf" in v or v.get("additionalProperties") == False
                 ), f"AdditionalProperties not set to false in {k}:{v}"
-            if "additionalProperties" in v:
-                if isinstance(v["additionalProperties"], dict):
-                    print_object(
-                        output,
-                        v["additionalProperties"]["properties"],
-                        depth=depth + 1,
-                        required_entries=v["additionalProperties"].get("required", []),
-                    )
+            if "additionalProperties" in v and isinstance(
+                v["additionalProperties"], dict
+            ):
+                print_object(
+                    output,
+                    v["additionalProperties"]["properties"],
+                    depth=depth + 1,
+                    required_entries=v["additionalProperties"].get("required", []),
+                )
             if "items" in v and v["items"]["type"] == "object":
                 print_object(
                     output,
@@ -115,11 +115,7 @@ def print_object(output, obj, depth=0, required_entries=None, additional_desc=No
                         required_entries=reqs,
                         additional_desc=f'Only if ``{k_}`` is ``"{cond_["const"]}"``',
                     )
-        elif k == "additionalProperties" and isinstance(v, bool):
-            # Skip display of additionalProperties if bool as it is used
-            # to make the schema stricter
-            pass
-        else:
+        elif k != "additionalProperties" or not isinstance(v, bool):
             print_entry(output, v, name=k, required=k in required_entries, depth=depth)
 
 
@@ -134,7 +130,7 @@ def generate_configuration_docs(input_file_path, output_file_path):
     )
     assert (
         j.get("additionalProperties") == False
-    ), f"AdditionalProperties not set to false in top level schema"
+    ), "AdditionalProperties not set to false in top level schema"
 
     out = output.render()
     # Only update output file if the file will be modified

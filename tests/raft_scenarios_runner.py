@@ -43,10 +43,9 @@ def separate_log_lines(text):
             mermaid.append(line[len("<RaftDriver>") :])
         elif '"raft_trace"' in line:
             l = json.loads(line)
-            if "msg" in l:
-                if "configurations" in l["msg"]:
-                    for config in l["msg"]["configurations"]:
-                        nodes.update(config["nodes"].keys())
+            if "msg" in l and "configurations" in l["msg"]:
+                for config in l["msg"]["configurations"]:
+                    nodes.update(config["nodes"].keys())
             log.append(line)
     return (
         os.linesep.join(mermaid) + os.linesep,
@@ -60,8 +59,7 @@ def expand_files(files):
     for path in files:
         if os.path.isdir(path):
             for dirpath, _, filenames in os.walk(path):
-                for name in filenames:
-                    all_files.append(os.path.join(dirpath, name))
+                all_files.extend(os.path.join(dirpath, name) for name in filenames)
         else:
             all_files.append(path)
     return all_files
@@ -87,7 +85,7 @@ if __name__ == "__main__":
     ostream = sys.stdout
 
     for scenario in files:
-        ostream.write("## {}\n\n".format(os.path.basename(scenario)))
+        ostream.write(f"## {os.path.basename(scenario)}\n\n")
         with block(ostream, "steps", 3):
             with open(scenario, "r", encoding="utf-8") as scen:
                 ostream.write(scen.read())

@@ -12,8 +12,6 @@ if __name__ == "__main__":
         format="<green>[{time:HH:mm:ss.SSS}]</green> {message}",
     )
 
-    if len(sys.argv) > 1 and sys.argv[1] in ["-d", "--dump"]:
-        infra.partitions.Partitioner.dump()
-    else:
-        infra.partitions.Partitioner.dump()
+    infra.partitions.Partitioner.dump()
+    if len(sys.argv) <= 1 or sys.argv[1] not in ["-d", "--dump"]:
         infra.partitions.Partitioner.cleanup()

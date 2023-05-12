@@ -62,19 +62,13 @@ def from_cryptography_eckey_obj(ext_key) -> EC2Key:
 
     cose_key = {}
     if pub_nums:
-        cose_key.update(
-            {
-                EC2KpCurve: curve,
-                EC2KpX: pub_nums.x.to_bytes(curve.size, "big"),
-                EC2KpY: pub_nums.y.to_bytes(curve.size, "big"),
-            }
-        )
+        cose_key |= {
+            EC2KpCurve: curve,
+            EC2KpX: pub_nums.x.to_bytes(curve.size, "big"),
+            EC2KpY: pub_nums.y.to_bytes(curve.size, "big"),
+        }
     if priv_nums:
-        cose_key.update(
-            {
-                EC2KpD: priv_nums.private_value.to_bytes(curve.size, "big"),
-            }
-        )
+        cose_key[EC2KpD] = priv_nums.private_value.to_bytes(curve.size, "big")
     return EC2Key.from_dict(cose_key)
 
 
@@ -83,17 +77,16 @@ def default_algorithm_for_key(key) -> str:
     Get the default algorithm for a given key, based on its
     type and parameters.
     """
-    if isinstance(key, EllipticCurvePublicKey):
-        if isinstance(key.curve, ec.SECP256R1):
-            return "ES256"
-        elif isinstance(key.curve, ec.SECP384R1):
-            return "ES384"
-        elif isinstance(key.curve, ec.SECP521R1):
-            return "ES512"
-        else:
-            raise NotImplementedError("unsupported curve")
-    else:
+    if not isinstance(key, EllipticCurvePublicKey):
         raise NotImplementedError("unsupported key type")
+    if isinstance(key.curve, ec.SECP256R1):
+        return "ES256"
+    elif isinstance(key.curve, ec.SECP384R1):
+        return "ES384"
+    elif isinstance(key.curve, ec.SECP521R1):
+        return "ES512"
+    else:
+        raise NotImplementedError("unsupported curve")
 
 
 def get_priv_key_type(priv_pem: Pem) -> str:
@@ -121,7 +114,7 @@ def create_cose_sign1(
     kid = cert_fingerprint(cert_pem)
 
     protected_header = {pycose.headers.Algorithm: alg, pycose.headers.KID: kid}
-    protected_header.update(additional_protected_header or {})
+    protected_header |= (additional_protected_header or {})
     msg = Sign1Message(phdr=protected_header, payload=payload)
 
     key = load_pem_private_key(key_priv_pem.encode("ascii"), None, default_backend())
@@ -144,7 +137,7 @@ def create_cose_sign1_prepare(
     kid = cert_fingerprint(cert_pem)
 
     protected_header = {pycose.headers.Algorithm: alg, pycose.headers.KID: kid}
-    protected_header.update(additional_protected_header or {})
+    protected_header |= (additional_protected_header or {})
     msg = Sign1Message(phdr=protected_header, payload=payload)
     tbs = cbor2.dumps(["Signature1", msg.phdr_encoded, b"", payload])
 
@@ -166,7 +159,7 @@ def create_cose_sign1_finish(
     kid = cert_fingerprint(cert_pem)
 
     protected_header = {pycose.headers.Algorithm: alg, pycose.headers.KID: kid}
-    protected_header.update(additional_protected_header or {})
+    protected_header |= (additional_protected_header or {})
     msg = Sign1Message(phdr=protected_header, payload=payload)
 
     # pylint: disable=protected-access

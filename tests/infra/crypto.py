@@ -170,7 +170,7 @@ def unwrap_key_rsa_oaep(
     wrapping_key = load_pem_private_key(
         wrapping_key_priv_pem.encode("ascii"), None, default_backend()
     )
-    unwrapped = wrapping_key.decrypt(
+    return wrapping_key.decrypt(
         wrapped_key,
         padding.OAEP(
             mgf=padding.MGF1(algorithm=hashes.SHA256()),
@@ -178,7 +178,6 @@ def unwrap_key_rsa_oaep(
             label=label,
         ),
     )
-    return unwrapped
 
 
 def unwrap_key_aes_pad(wrapped_key: bytes, wrapping_key: bytes) -> bytes:
@@ -212,22 +211,21 @@ def sign(algorithm: dict, key_pem: str, data: bytes) -> bytes:
         else:
             raise ValueError("Unsupported signing algorithm")
     elif isinstance(key, ec.EllipticCurvePrivateKey):
-        if algorithm["name"] == "ECDSA":
-            # pylint: disable=no-value-for-parameter
-            signature = key.sign(data, ec.ECDSA(hash_alg))
-            encoding = algorithm.get("encoding", "ieee-p1363")
-            if encoding == "der":
-                pass
-            elif encoding == "ieee-p1363":
-                key_size_bits = key.key_size
-                signature = convert_ecdsa_signature_from_der_to_p1363(
-                    signature, key_size_bits
-                )
-            else:
-                raise ValueError(f"Unknown encoding: {encoding}")
-            return signature
-        else:
+        if algorithm["name"] != "ECDSA":
             raise ValueError("Unsupported signing algorithm")
+        # pylint: disable=no-value-for-parameter
+        signature = key.sign(data, ec.ECDSA(hash_alg))
+        encoding = algorithm.get("encoding", "ieee-p1363")
+        if encoding == "der":
+            pass
+        elif encoding == "ieee-p1363":
+            key_size_bits = key.key_size
+            signature = convert_ecdsa_signature_from_der_to_p1363(
+                signature, key_size_bits
+            )
+        else:
+            raise ValueError(f"Unknown encoding: {encoding}")
+        return signature
     elif isinstance(key, ed25519.Ed25519PrivateKey):
         return key.sign(data)
     else:
@@ -240,8 +238,7 @@ def convert_ecdsa_signature_from_der_to_p1363(
     (r, s) = decode_dss_signature(signature_der)
     assert key_size_bits % 8 == 0
     n = key_size_bits // 8
-    signature_p1363 = r.to_bytes(n, byteorder="big") + s.to_bytes(n, byteorder="big")
-    return signature_p1363
+    return r.to_bytes(n, byteorder="big") + s.to_bytes(n, byteorder="big")
 
 
 def verify_signature(algorithm: dict, signature: bytes, data: bytes, key_pub_pem: str):
@@ -272,8 +269,7 @@ def convert_ecdsa_signature_from_p1363_der(signature_p1363: bytes) -> bytes:
     n = len(signature_p1363) // 2
     r = int.from_bytes(signature_p1363[:n], "big")
     s = int.from_bytes(signature_p1363[n:], "big")
-    signature_der = encode_dss_signature(r, s)
-    return signature_der
+    return encode_dss_signature(r, s)
 
 
 def pub_key_pem_to_der(pem: str) -> bytes:

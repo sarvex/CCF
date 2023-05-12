@@ -51,7 +51,7 @@ def test_network_node_info(network, args):
             assert infra.interfaces.HostSpec.to_json(n.host) == node["rpc_interfaces"]
             del nodes_by_id[n.node_id]
 
-        assert nodes_by_id == {}
+        assert not nodes_by_id
 
     # Populate node_infos by calling self
     node_infos = {}

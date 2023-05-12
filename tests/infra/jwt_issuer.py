@@ -16,7 +16,7 @@ from loguru import logger as LOG
 
 
 def make_bearer_header(jwt):
-    return {"authorization": "Bearer " + jwt}
+    return {"authorization": f"Bearer {jwt}"}
 
 
 def extract_b64(cert_pem):
@@ -24,8 +24,7 @@ def extract_b64(cert_pem):
     begin_index = cert_pem.find(begin_certificate)
     end_index = cert_pem.find("-----END CERTIFICATE-----")
     formatted = cert_pem[begin_index + len(begin_certificate) + 1 : end_index].strip()
-    result = formatted.replace("\n", "").replace(" ", "")
-    return result
+    return formatted.replace("\n", "").replace(" ", "")
 
 
 class MyHTTPRequestHandler(BaseHTTPRequestHandler):
@@ -156,8 +155,7 @@ class JwtIssuer:
         return {"keys": [self._create_jwks(kid_, test_invalid_is_key)]}
 
     def create_jwks_for_kids(self, kids):
-        jwks = {}
-        jwks["keys"] = []
+        jwks = {"keys": []}
         for kid in kids:
             jwks["keys"].append(self._create_jwks(kid))
         return jwks
@@ -180,7 +178,7 @@ class JwtIssuer:
         with tempfile.NamedTemporaryFile(prefix="ccf", mode="w+") as metadata_fp:
             issuer = {"issuer": full_name, "auto_refresh": self.auto_refresh}
             if self.auto_refresh:
-                issuer.update({"ca_cert_bundle_name": ca_bundle_name})
+                issuer["ca_cert_bundle_name"] = ca_bundle_name
             json.dump(issuer, metadata_fp)
             metadata_fp.flush()
             network.consortium.set_jwt_issuer(primary, metadata_fp.name)

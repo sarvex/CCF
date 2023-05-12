@@ -23,9 +23,8 @@ class TablesVisitor(docutils.nodes.NodeVisitor):
         (name,) = node.attributes["names"]
         if name.startswith("public:"):
             self.prefix = name
-        else:
-            if self.prefix:
-                self.tables.append(f"{self.prefix}{name}")
+        elif self.prefix:
+            self.tables.append(f"{self.prefix}{name}")
 
     def unknown_visit(self, node) -> None:
         pass

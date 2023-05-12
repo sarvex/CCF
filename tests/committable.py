@@ -40,8 +40,8 @@ def run(args):
     hosts = ["local://localhost"] * 5
 
     with infra.network.network(
-        hosts, args.binary_dir, args.debug_nodes, args.perf_nodes, pdb=args.pdb
-    ) as network:
+            hosts, args.binary_dir, args.debug_nodes, args.perf_nodes, pdb=args.pdb
+        ) as network:
         network.start_and_open(args)
         primary, backups = network.find_nodes()
 
@@ -53,11 +53,12 @@ def run(args):
         committable_txs = []
         # Run some transactions that can't be committed now
         with primary.client("user0") as uc:
-            for i in range(3):
-                committable_txs.append(
-                    uc.post("/app/log/private", {"id": 100 + i, "msg": "Hello world"})
+            committable_txs.extend(
+                uc.post(
+                    "/app/log/private", {"id": 100 + i, "msg": "Hello world"}
                 )
-
+                for i in range(3)
+            )
         last_tx = committable_txs[-1]
         sig_view, sig_seqno = last_tx.view, last_tx.seqno + 1
         with backups[0].client() as bc:
@@ -73,11 +74,12 @@ def run(args):
         backups[0].suspend()
         post_partition_txs = []
         with primary.client("user0") as uc:
-            for i in range(3):
-                post_partition_txs.append(
-                    uc.post("/app/log/private", {"id": 100 + i, "msg": "Hello world"})
+            post_partition_txs.extend(
+                uc.post(
+                    "/app/log/private", {"id": 100 + i, "msg": "Hello world"}
                 )
-
+                for i in range(3)
+            )
         # Sleep long enough that this primary should be instantly replaced when nodes wake
         sleep_time = 2 * args.election_timeout_ms / 1000
         LOG.info(f"Sleeping {sleep_time}s")

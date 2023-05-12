@@ -900,7 +900,7 @@ def temporary_constitution(network, args, js_constitution_suffix):
         f.write(js_constitution_suffix)
         f.flush()
 
-        modified_constitution = [path for path in original_constitution] + [f.name]
+        modified_constitution = list(original_constitution) + [f.name]
         network.consortium.set_constitution(primary, modified_constitution)
 
         yield

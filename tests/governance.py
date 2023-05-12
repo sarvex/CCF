@@ -539,14 +539,11 @@ def test_all_nodes_cert_renewal(network, args, valid_from=None):
     valid_from = valid_from or datetime.utcnow()
     validity_period_days = args.maximum_node_certificate_validity_days
 
-    self_signed_node_certs_before = {}
-    for node in network.get_joined_nodes():
-        # Note: GET /node/self_signed_certificate endpoint was added after 2.0.0-r6
-        if node.version_after("ccf-2.0.0-rc6"):
-            self_signed_node_certs_before[
-                node.local_node_id
-            ] = node.retrieve_self_signed_cert()
-
+    self_signed_node_certs_before = {
+        node.local_node_id: node.retrieve_self_signed_cert()
+        for node in network.get_joined_nodes()
+        if node.version_after("ccf-2.0.0-rc6")
+    }
     network.consortium.set_all_nodes_certificate_validity(
         primary,
         valid_from=valid_from,
@@ -713,12 +710,12 @@ def single_node(args):
     }
     warn_counts = {k: 0 for k in {validate_warn, apply_warn}}
     out_path, _ = primary.get_logs()
-    for line in open(out_path, "r", encoding="utf-8").readlines():
-        for k in info_counts.keys():
+    for line in open(out_path, "r", encoding="utf-8"):
+        for k in info_counts:
             if k in line and "[info ]" in line:
                 info_counts[k] += 1
 
-        for k in warn_counts.keys():
+        for k in warn_counts:
             if k in line and "[fail ]" in line:
                 warn_counts[k] += 1
 

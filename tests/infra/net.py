@@ -29,12 +29,12 @@ def ephemeral_range():
                 "tcp",
             ]
         )
-        match = re.compile(r"Start Port\s+: (?P<port>\d+)", re.MULTILINE).search(
-            str(output)
-        )
-        if not match:
-            raise ValueError("Failed to match start port in {}".format(output))
-        return (int(match.group("port")), 65535)
+        if match := re.compile(
+            r"Start Port\s+: (?P<port>\d+)", re.MULTILINE
+        ).search(str(output)):
+            return int(match["port"]), 65535
+        else:
+            raise ValueError(f"Failed to match start port in {output}")
     except (OSError, ValueError, IndexError):
         pass
 
@@ -56,7 +56,7 @@ def probably_free_local_port(host):
             return port
         except socket.error:
             pass
-    raise RuntimeError("Couldn't get a free port after {} tries!".format(tries))
+    raise RuntimeError(f"Couldn't get a free port after {tries} tries!")
 
 
 def probably_free_remote_port(host):
@@ -69,7 +69,7 @@ def probably_free_remote_port(host):
             s.close()
         except socket.error:
             return port
-    raise RuntimeError("Couldn't get a free port after {} tries!".format(tries))
+    raise RuntimeError(f"Couldn't get a free port after {tries} tries!")
 
 
 def two_different(finder, *args, **kwargs):
@@ -81,7 +81,4 @@ def two_different(finder, *args, **kwargs):
 
 def expand_localhost():
     ipv4 = ".".join((str(b) for b in (127, rr(1, 255), rr(1, 255), rr(2, 255))))
-    if getenv("CCF_IPV6"):
-        return f"::ffff:{ipv4}"
-    else:
-        return ipv4
+    return f"::ffff:{ipv4}" if getenv("CCF_IPV6") else ipv4

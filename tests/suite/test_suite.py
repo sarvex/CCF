@@ -16,9 +16,6 @@ import e2e_common_endpoints
 
 from inspect import signature, Parameter
 
-suites = {}
-
-
 # This suite tests that rekeying, network configuration changes, recoveries and
 # curve changes can be interleaved
 suite_rekey_recovery = [
@@ -39,8 +36,7 @@ suite_rekey_recovery = [
     e2e_logging.test_rekey,
     recovery.test_recover_service_with_wrong_identity,
 ]
-suites["rekey_recovery"] = suite_rekey_recovery
-
+suites = {"rekey_recovery": suite_rekey_recovery}
 # This suite tests that membership changes and recoveries can be interleaved
 suite_membership_recovery = [
     membership.test_add_member,

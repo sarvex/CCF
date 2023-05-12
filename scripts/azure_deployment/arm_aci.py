@@ -370,12 +370,10 @@ def make_aci_deployment(args: Namespace) -> Deployment:
             if args.security_policy_file is not None:
                 with open(args.security_policy_file, "r") as f:
                     security_policy = f.read()
+            elif args.default_security_policy_format == "rego":
+                security_policy = DEFAULT_REGO_SECURITY_POLICY
             else:
-                # Otherwise, default to most permissive policy
-                if args.default_security_policy_format == "rego":
-                    security_policy = DEFAULT_REGO_SECURITY_POLICY
-                else:
-                    security_policy = DEFAULT_JSON_SECURITY_POLICY
+                security_policy = DEFAULT_JSON_SECURITY_POLICY
 
             container_group_properties["confidentialComputeProperties"] = {
                 "ccePolicy": base64.b64encode(security_policy.encode()).decode(),

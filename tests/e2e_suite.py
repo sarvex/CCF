@@ -112,10 +112,7 @@ def run(args):
             test_time_before = time.time()
 
             # Actually run the test
-            if not args.dry_run:
-                new_network = test(network, args)
-            else:
-                new_network = network
+            new_network = test(network, args) if not args.dry_run else network
             status = TestStatus.success
 
         except reqs.TestRequirementsNotMet as ce:

@@ -9,14 +9,14 @@ from loguru import logger as LOG
 
 
 def mk(name, contents):
-    LOG.info('echo "<{} bytes>" > {}'.format(len(contents), name))
+    LOG.info(f'echo "<{len(contents)} bytes>" > {name}')
     with open(name, "w", encoding="utf-8") as dst:
         dst.write(contents)
 
 
 def mk_new(name, contents):
     if not os.path.isfile(name):
-        LOG.debug('Creating file at "{}" containing "{}"'.format(name, contents))
+        LOG.debug(f'Creating file at "{name}" containing "{contents}"')
         mk(name, contents)
 
 
@@ -40,13 +40,12 @@ def build_lib_path(
         mode = "SNP enclave"
     else:
         raise ValueError(f"Invalid enclave_platform passed {enclave_platform}")
-    if os.path.isfile(lib_name):
-        if ext not in lib_name:
-            raise ValueError(f"{mode} requires {ext} enclave image")
-        return lib_name
-    else:
+    if not os.path.isfile(lib_name):
         # Make sure relative paths include current directory. Absolute paths will be unaffected
         return os.path.join(library_dir, os.path.normpath(f"{lib_name}{ext}"))
+    if ext not in lib_name:
+        raise ValueError(f"{mode} requires {ext} enclave image")
+    return lib_name
 
 
 def build_bin_path(bin_name, binary_dir="."):
@@ -73,10 +72,7 @@ def quote_bytes(quote_file_name):
     Parses a binary quote file into raw bytes.
     """
     with open(quote_file_name, "rb") as quote:
-        chars = []
-        for c in quote.read():
-            chars.append(c)
-        return chars
+        return list(quote.read())
 
 
 def create_dir(dir_path):
@@ -101,7 +97,7 @@ def compute_file_checksum(file_name):
 @contextmanager
 def working_dir(path):
     cwd = os.getcwd()
-    LOG.info("cd {}".format(path))
+    LOG.info(f"cd {path}")
     os.chdir(path)
     try:
         yield

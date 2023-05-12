@@ -67,7 +67,7 @@ def empty_signature(request):
 
 def modified_signature(request):
     original = request.headers["authorization"]
-    s = re.search(signature_regex, original).group(1)
+    s = re.search(signature_regex, original)[1]
     index = len(s) // 3
     char = s[index]
     new_char = "B" if char == "A" else "A"

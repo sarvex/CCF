@@ -52,15 +52,14 @@ def main():
     with open(args.changelog) as f:
         while line := f.readline():
             if match := version_header.match(line):
-                log_version = match.group(1)
+                log_version = match[1]
                 current_release_notes = []
                 release_notes[log_version] = current_release_notes
             elif match := link_definition.match(line):
-                link_version = match.group(1)
+                link_version = match[1]
                 links_found.append(link_version)
-            else:
-                if current_release_notes != None:
-                    current_release_notes.append(line.strip())
+            elif current_release_notes != None:
+                current_release_notes.append(line.strip())
 
     documented_versions = set(release_notes.keys())
 
@@ -88,20 +87,18 @@ def main():
                         f"[{version}]: https://github.com/microsoft/CCF/releases/tag/ccf-{version}\n"
                     )
         sys.exit(1)
+    elif len(args.target_version) > 0:
+        # Print release notes for each target version.
+        # If multiple versions are requested, delimit and prefix each.
+        multiple = len(args.target_version) > 1
+        for i, version in enumerate(args.target_version):
+            if multiple:
+                if i > 0:
+                    print("\n" + "-" * 80 + "\n")
+                print(f"# {version}")
+            print("\n".join(release_notes[version]).strip())
     else:
-        # File is valid.
-        if len(args.target_version) > 0:
-            # Print release notes for each target version.
-            # If multiple versions are requested, delimit and prefix each.
-            multiple = len(args.target_version) > 1
-            for i, version in enumerate(args.target_version):
-                if multiple:
-                    if i > 0:
-                        print("\n" + "-" * 80 + "\n")
-                    print(f"# {version}")
-                print("\n".join(release_notes[version]).strip())
-        else:
-            print("CHANGELOG is valid!")
+        print("CHANGELOG is valid!")
 
 
 if __name__ == "__main__":

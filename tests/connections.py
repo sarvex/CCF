@@ -67,11 +67,11 @@ def run(args):
     supp_file = os.path.join(
         os.path.abspath(os.path.dirname(__file__)), "connections.supp"
     )
-    args.ubsan_options = "suppressions=" + str(supp_file)
+    args.ubsan_options = f"suppressions={str(supp_file)}"
 
     with infra.network.network(
-        args.nodes, args.binary_dir, args.debug_nodes, args.perf_nodes, pdb=args.pdb
-    ) as network:
+            args.nodes, args.binary_dir, args.debug_nodes, args.perf_nodes, pdb=args.pdb
+        ) as network:
         check = infra.checker.Checker()
         network.start_and_open(args)
         primary, _ = network.find_nodes()
@@ -227,13 +227,8 @@ def run(args):
                 client_fn=functools.partial(primary.client, interface_name=name),
             )
 
-        try:
+        with contextlib.suppress(AllConnectionsCreatedException):
             create_connections_until_exhaustion(to_create, True)
-        except AllConnectionsCreatedException:
-            # This is fine! The soft cap means this test no longer reaches the hard cap.
-            # It gets HTTP errors but then _closes_ sockets, fast enough that we never hit the hard cap
-            pass
-
         final_metrics = get_session_metrics(primary)
         assert final_metrics["active"] <= final_metrics["peak"], final_metrics
         assert final_metrics["peak"] > initial_metrics["peak"], (

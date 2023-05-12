@@ -9,10 +9,11 @@ from collections import abc
 
 
 def build_vegeta_target(hostname, path, body=None, method="POST"):
-    target = {}
-    target["method"] = method
-    target["url"] = urllib.parse.urljoin(f"https://{hostname}", path)
-    target["header"] = {"Content-Type": ["application/json"]}
+    target = {
+        "method": method,
+        "url": urllib.parse.urljoin(f"https://{hostname}", path),
+        "header": {"Content-Type": ["application/json"]},
+    }
     if body is not None:
         # Bodies must be base64 encoded strings
         target["body"] = base64.b64encode(json.dumps(body).encode()).decode()
@@ -39,9 +40,7 @@ def recursive_format(obj, i):
 
 def nan_replacer(i):
     def fun(s):
-        if s == "NaN":
-            return i
-        return float(s)
+        return i if s == "NaN" else float(s)
 
     return fun
 

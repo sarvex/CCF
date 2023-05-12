@@ -91,29 +91,18 @@ def measure_commit_latency(args, sig_interval=100):
                 poll_time_ms = poll_time_s * 1000
                 times.append(poll_time_ms)
 
-    stats = Stats(
-        f"Commit latency with {args.sig_ms_interval}ms sig interval", times, units="ms"
+    return Stats(
+        f"Commit latency with {args.sig_ms_interval}ms sig interval",
+        times,
+        units="ms",
     )
-    return stats
 
 
 def run(args):
-    all_stats = {}
-    for sig_interval in (
-        1,
-        2,
-        4,
-        8,
-        16,
-        32,
-        64,
-        128,
-        256,
-    ):
-        all_stats[sig_interval] = measure_commit_latency(
-            args, sig_interval=sig_interval
-        )
-
+    all_stats = {
+        sig_interval: measure_commit_latency(args, sig_interval=sig_interval)
+        for sig_interval in (1, 2, 4, 8, 16, 32, 64, 128, 256)
+    }
     factors = []
     for sig_interval, stats in all_stats.items():
         factor = stats.mean() / sig_interval

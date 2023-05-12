@@ -24,8 +24,8 @@ if __name__ == "__main__":
     jws_raw_len = len(jws_raw)
 
     sig = DERSignature()
-    sig["r"] = int.from_bytes(jws_raw[: int(jws_raw_len / 2)], byteorder="big")
-    sig["s"] = int.from_bytes(jws_raw[-int(jws_raw_len / 2) :], byteorder="big")
+    sig["r"] = int.from_bytes(jws_raw[:jws_raw_len // 2], byteorder="big")
+    sig["s"] = int.from_bytes(jws_raw[-(jws_raw_len // 2):], byteorder="big")
     output_buf = encode(sig)
 
     print(base64.b64encode(output_buf).decode())

@@ -251,9 +251,9 @@ class ServiceLoad(infra.concurrency.StoppableThread):
                     elif new_primary != primary:
                         event = f"elect p[{primary.local_node_id}] -> p[{new_primary.local_node_id}]"
                     else:
+                        event = ""
                         added = set(new_nodes) - set(known_nodes)
                         removed = set(known_nodes) - set(new_nodes)
-                        event = ""
                         if added:
                             event += f"add n{[n.local_node_id for n in added]}"
                         if removed:

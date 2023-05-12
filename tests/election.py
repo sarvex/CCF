@@ -179,13 +179,13 @@ def test_commit_view_history(network, args):
 def run(args):
     with infra.service_load.load() as load:
         with infra.network.network(
-            args.nodes,
-            args.binary_dir,
-            args.debug_nodes,
-            args.perf_nodes,
-            pdb=args.pdb,
-            service_load=load,
-        ) as network:
+                    args.nodes,
+                    args.binary_dir,
+                    args.debug_nodes,
+                    args.perf_nodes,
+                    pdb=args.pdb,
+                    service_load=load,
+                ) as network:
             check = infra.checker.Checker()
 
             network.start_and_open(args)
@@ -200,18 +200,14 @@ def run(args):
                 primary, current_view = network.find_primary()
 
                 LOG.debug(
-                    "Commit new transactions, primary:{}, current_view:{}".format(
-                        primary.local_node_id, current_view
-                    )
+                    f"Commit new transactions, primary:{primary.local_node_id}, current_view:{current_view}"
                 )
                 with primary.client("user0") as c:
                     res = c.post(
                         "/app/log/private",
                         {
                             "id": current_view,
-                            "msg": "This log is committed in view {}".format(
-                                current_view
-                            ),
+                            "msg": f"This log is committed in view {current_view}",
                         },
                     )
                     check(res, result=True)

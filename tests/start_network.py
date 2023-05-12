@@ -45,13 +45,13 @@ def run(args):
 
     try:
         with infra.network.network(
-            hosts=hosts,
-            binary_directory=args.binary_dir,
-            library_directory=args.library_dir,
-            dbg_nodes=args.debug_nodes,
-        ) as network:
+                    hosts=hosts,
+                    binary_directory=args.binary_dir,
+                    library_directory=args.library_dir,
+                    dbg_nodes=args.debug_nodes,
+                ) as network:
             if args.recover:
-                args.label = args.label + "_recover"
+                args.label = f"{args.label}_recover"
                 LOG.info("Recovering network from:")
                 LOG.info(f" - Common directory: {args.common_dir}")
                 LOG.info(f" - Ledger: {args.ledger_dir}")
@@ -88,7 +88,7 @@ def run(args):
                 network.start_and_open(args)
 
             nodes = network.get_joined_nodes()
-            max_len = max([len(str(node.local_node_id)) for node in nodes])
+            max_len = max(len(str(node.local_node_id)) for node in nodes)
 
             # To be sure, confirm that the app frontend is open on each node
             for node in nodes:

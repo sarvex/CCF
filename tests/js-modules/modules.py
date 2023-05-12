@@ -819,7 +819,7 @@ def test_npm_app(network, args):
 
         jwt_kid = "my_key_id"
         jwt = infra.crypto.create_jwt({}, jwt_key_priv_pem, jwt_kid)
-        r = c.get("/app/jwt", headers={"authorization": "Bearer " + jwt})
+        r = c.get("/app/jwt", headers={"authorization": f"Bearer {jwt}"})
         assert r.status_code == http.HTTPStatus.UNAUTHORIZED, r.status_code
         body = r.body.json()
         assert body["msg"].startswith("token signing key not found"), r.body
@@ -919,20 +919,20 @@ def test_npm_app(network, args):
     with primary.client("user0") as c:
         jwt_mismatching_key_priv_pem, _ = infra.crypto.generate_rsa_keypair(2048)
         jwt = infra.crypto.create_jwt({}, jwt_mismatching_key_priv_pem, jwt_kid)
-        r = c.get("/app/jwt", headers={"authorization": "Bearer " + jwt})
+        r = c.get("/app/jwt", headers={"authorization": f"Bearer {jwt}"})
         assert r.status_code == http.HTTPStatus.UNAUTHORIZED, r.status_code
         body = r.body.json()
         assert body["msg"] == "jwt validation failed", r.body
 
         jwt = infra.crypto.create_jwt({}, jwt_key_priv_pem, jwt_kid)
-        r = c.get("/app/jwt", headers={"authorization": "Bearer " + jwt})
+        r = c.get("/app/jwt", headers={"authorization": f"Bearer {jwt}"})
         assert r.status_code == http.HTTPStatus.UNAUTHORIZED, r.status_code
         body = r.body.json()
         assert body["msg"] == "jwt invalid, sub claim missing", r.body
 
         user_id = "user0"
         jwt = infra.crypto.create_jwt({"sub": user_id}, jwt_key_priv_pem, jwt_kid)
-        r = c.get("/app/jwt", headers={"authorization": "Bearer " + jwt})
+        r = c.get("/app/jwt", headers={"authorization": f"Bearer {jwt}"})
         assert r.status_code == http.HTTPStatus.OK, r.status_code
         body = r.body.json()
         assert body["userId"] == user_id, r.body
@@ -987,7 +987,7 @@ def test_js_execution_time(network, args):
         user_id = "user0"
         jwt = infra.crypto.create_jwt({"sub": user_id}, jwt_key_priv_pem, jwt_kid)
 
-        r = c.get("/app/jwt", headers={"authorization": "Bearer " + jwt})
+        r = c.get("/app/jwt", headers={"authorization": f"Bearer {jwt}"})
         assert r.status_code == http.HTTPStatus.INTERNAL_SERVER_ERROR, r.status_code
         body = r.body.json()
         assert body["error"]["message"] == "Operation took too long to complete."
@@ -999,7 +999,7 @@ def test_js_execution_time(network, args):
             max_stack_bytes=default_max_stack_size,
             max_execution_time_ms=default_max_execution_time,
         )
-        r = c.get("/app/jwt", headers={"authorization": "Bearer " + jwt})
+        r = c.get("/app/jwt", headers={"authorization": f"Bearer {jwt}"})
         assert r.status_code == http.HTTPStatus.OK, r.status_code
         body = r.body.json()
         assert body["userId"] == user_id, r.body

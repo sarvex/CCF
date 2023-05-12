@@ -92,10 +92,10 @@ def digest(algo, data):
 
 def unpack(stream, fmt):
     size = struct.calcsize(fmt)
-    buf = stream.read(size)
-    if not buf:
+    if buf := stream.read(size):
+        return struct.unpack(fmt, buf)[0]
+    else:
         raise EOFError  # Reached end of stream
-    return struct.unpack(fmt, buf)[0]
 
 
 def unpack_array(stream, fmt, length):
@@ -276,15 +276,13 @@ class PublicDomain:
                 read_count = self._read_size()
                 assert read_count == 0, f"Unexpected read count: {read_count}"
 
-                write_count = self._read_size()
-                if write_count:
+                if write_count := self._read_size():
                     for _ in range(write_count):
                         k = self._read_next_entry()
                         val = self._read_next_entry()
                         records[k] = val
 
-                remove_count = self._read_size()
-                if remove_count:
+                if remove_count := self._read_size():
                     for _ in range(remove_count):
                         k = self._read_next_entry()
                         records[k] = None
@@ -507,7 +505,7 @@ class LedgerValidator:
             elif self.service_status == "Open":
                 assert updated_status in ["Recovering"], updated_status
             else:
-                assert self.service_status == None, self.service_status
+                assert self.service_status is None, self.service_status
             self.service_status = updated_status
 
         # Checks complete, add this transaction to tree
@@ -740,15 +738,15 @@ class Transaction(Entry):
         commit_evidence_digest = self.get_public_domain().get_commit_evidence_digest()
         write_set_digest = self.get_write_set_digest()
         if claims_digest is None:
-            if commit_evidence_digest is None:
-                return write_set_digest
-            else:
-                return self._dgst(write_set_digest + commit_evidence_digest)
-        else:
-            assert (
-                commit_evidence_digest
-            ), "Invalid transaction: commit_evidence_digest not set"
-            return self._dgst(write_set_digest + commit_evidence_digest + claims_digest)
+            return (
+                write_set_digest
+                if commit_evidence_digest is None
+                else self._dgst(write_set_digest + commit_evidence_digest)
+            )
+        assert (
+            commit_evidence_digest
+        ), "Invalid transaction: commit_evidence_digest not set"
+        return self._dgst(write_set_digest + commit_evidence_digest + claims_digest)
 
     def _complete_read(self):
         self._file.seek(self._next_offset, 0)
@@ -931,8 +929,8 @@ class Ledger:
 
             # The same ledger file may appear multiple times in different directories
             # so ignore duplicates
-            if os.path.isfile(path) and not any(
-                os.path.basename(path) in f for f in ledger_files
+            if os.path.isfile(path) and all(
+                os.path.basename(path) not in f for f in ledger_files
             ):
                 ledger_files.append(path)
 

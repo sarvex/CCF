@@ -158,15 +158,13 @@ if __name__ == "__main__":
 
         ax = plt.axes()
         commits, times = plot_timeseries(sent_df, received_df, ax, args.title, args)
-        commit_lines.update(commits)
-        time_lines.update(times)
+        commit_lines |= commits
+        time_lines |= times
 
     elif args.command == "compare":
         variants = json.load(open(args.variants))
         if not isinstance(variants, list):
-            raise TypeError(
-                "Contents of variants file is not a list: {}".format(variants)
-            )
+            raise TypeError(f"Contents of variants file is not a list: {variants}")
 
         row_len = max(len(row) for row in variants)
 
@@ -178,9 +176,9 @@ if __name__ == "__main__":
         figure.suptitle(args.title)
 
         for y, row in enumerate(variants):
-            print("Row {}".format(y))
+            print(f"Row {y}")
             for x, variant in enumerate(row):
-                print(" Column {}".format(x))
+                print(f" Column {x}")
                 ax = axes[y, x]
 
                 # Hide empty axes
@@ -194,7 +192,7 @@ if __name__ == "__main__":
                     if isinstance(cmd, list):
                         cmd = " ".join(cmd)
                     print("  Executing:")
-                    print("   {}".format(cmd))
+                    print(f"   {cmd}")
                     result = subprocess.run(cmd, shell=True, capture_output=True)
                     print("  Done, plotting")
                 else:
@@ -235,7 +233,7 @@ if __name__ == "__main__":
     plt.tight_layout()
 
     if args.save_to is not None:
-        print("Writing image to {}".format(args.save_to))
+        print(f"Writing image to {args.save_to}")
         plt.savefig(args.save_to, bbox_inches="tight")
     else:
         print("Displaying")

@@ -35,10 +35,7 @@ class WikiCacherExecutor:
     ):
         self.node_public_rpc_address = node_public_rpc_address
         self.base_url = base_url
-        if label is not None:
-            self.prefix = f"[{label}] "
-        else:
-            self.prefix = ""
+        self.prefix = f"[{label}] " if label is not None else ""
         self.credentials = credentials
 
         self.handled_requests_count = 0
@@ -47,8 +44,12 @@ class WikiCacherExecutor:
     def get_supported_endpoints(topics):
         endpoints = []
         for topic in topics:
-            endpoints.append(("POST", "/update_cache/" + topic))
-            endpoints.append(("GET", "/article_description/" + topic))
+            endpoints.extend(
+                (
+                    ("POST", f"/update_cache/{topic}"),
+                    ("GET", f"/article_description/{topic}"),
+                )
+            )
         return endpoints
 
     def _api_base(self):
@@ -74,7 +75,7 @@ class WikiCacherExecutor:
         prefix = "/update_cache/"
         title = request.uri[len(prefix) :]
         description = self._get_description(title)
-        if description == None:
+        if description is None:
             response.status_code = HTTP.HttpStatusCode.BAD_GATEWAY
             response.body = f"Error when fetching article with title '{title}'".encode(
                 "utf-8"

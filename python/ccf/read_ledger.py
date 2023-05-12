@@ -61,10 +61,14 @@ default_tables_format_rules = [
 
 
 def find_rule(tables_format_rules, target_table_name):
-    for table_name_re, format_rules in tables_format_rules:
-        if table_name_re.match(target_table_name):
-            return format_rules
-    return default_format_rule
+    return next(
+        (
+            format_rules
+            for table_name_re, format_rules in tables_format_rules
+            if table_name_re.match(target_table_name)
+        ),
+        default_format_rule,
+    )
 
 
 def print_key(key, table_name, tables_format_rules, indent_s, is_removed=False):
@@ -77,7 +81,7 @@ def print_key(key, table_name, tables_format_rules, indent_s, is_removed=False):
 
 
 def counted_string(l, name):
-    return f"{len(l)} {name}{'s' * bool(len(l) != 1)}"
+    return f"{len(l)} {name}{'s' * (len(l) != 1)}"
 
 
 def dump_entry(entry, table_filter, tables_format_rules):

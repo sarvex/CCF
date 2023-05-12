@@ -149,11 +149,8 @@ def register_new_executor(
         assert r.details == "Executor registration is accepted."
         LOG.success(f"Registered new executor {r.executor_id}")
 
-    # Create (and return) credentials that allow authentication as this new executor
-    executor_credentials = grpc.ssl_channel_credentials(
+    return grpc.ssl_channel_credentials(
         service_certificate_bytes,
         private_key=key_priv_pem.encode(),
         certificate_chain=cert.encode(),
     )
-
-    return executor_credentials

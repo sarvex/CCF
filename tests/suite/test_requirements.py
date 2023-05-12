@@ -36,11 +36,10 @@ def ensure_reqs(check_reqs):
             except TestRequirementsNotMet as e:
                 if args.throws_if_reqs_not_met:
                     raise
-                else:
-                    LOG.warning(
-                        f'Test requirements not met, skipping "{func.__name__}": {e}'
-                    )
-                    return network
+                LOG.warning(
+                    f'Test requirements not met, skipping "{func.__name__}": {e}'
+                )
+                return network
             except Exception as e:
                 raise TestRequirementsNotMet(
                     f"Could not check if test requirements were met: {e}"
@@ -59,7 +58,7 @@ def supports_methods(*methods):
         for method in methods:
             actor = method.split("/")[1].strip()
             if actor not in {"gov", "node", ".well-known", "app"}:
-                method = "/app" + method
+                method = f"/app{method}"
             allmethods.add(method)
         primary, _ = network.find_primary()
         with primary.client("user0") as c:

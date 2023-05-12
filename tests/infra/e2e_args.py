@@ -421,7 +421,4 @@ def cli_args(add=lambda x: None, parser=None, accept_unknown=False):
     if not args.package and args.js_app_bundle:
         args.package = "libjs_generic"
 
-    if accept_unknown:
-        return args, unknown_args
-    else:
-        return args
+    return (args, unknown_args) if accept_unknown else args

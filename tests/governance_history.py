@@ -79,15 +79,15 @@ def check_operations(ledger, operations):
                             member_id.decode(),
                             "vote",
                         )
+                    elif msg_type == "proposal":
+                        (proposal_id,) = tables["public:ccf.gov.proposals"].keys()
+                        op = (proposal_id.decode(), member_id.decode(), "propose")
                     elif msg_type == "withdrawal":
                         op = (
                             msg.phdr["ccf.gov.msg.proposal_id"],
                             member_id.decode(),
                             "withdraw",
                         )
-                    elif msg_type == "proposal":
-                        (proposal_id,) = tables["public:ccf.gov.proposals"].keys()
-                        op = (proposal_id.decode(), member_id.decode(), "propose")
                     else:
                         assert False, msg
 
@@ -101,10 +101,10 @@ def check_signatures(ledger):
     LOG.debug("Audit the ledger file to confirm signatures schema and positioning")
 
     prev_sig_txid = None
+    signatures_table_name = "public:ccf.internal.signatures"
     for chunk in ledger:
         for tr in chunk:
             tables = tr.get_public_domain().get_tables()
-            signatures_table_name = "public:ccf.internal.signatures"
             if signatures_table_name in tables:
                 signatures_table = tables[signatures_table_name]
                 signatures = list(signatures_table.items())
@@ -121,14 +121,14 @@ def check_signatures(ledger):
                 sig_txid = TxID(tr.gcm_header.view, tr.gcm_header.seqno)
 
                 # Adjacent signatures only occur on a view change
-                if prev_sig_txid != None:
-                    if prev_sig_txid.seqno + 1 == sig_txid.seqno:
-                        # Reduced from assert while investigating cause
-                        # https://github.com/microsoft/CCF/issues/5078
-                        if sig_txid.view <= prev_sig_txid.view:
-                            LOG.error(
-                                f"Adjacent signatures at {prev_sig_txid} and {sig_txid}"
-                            )
+                if (
+                    prev_sig_txid != None
+                    and prev_sig_txid.seqno + 1 == sig_txid.seqno
+                    and sig_txid.view <= prev_sig_txid.view
+                ):
+                    LOG.error(
+                        f"Adjacent signatures at {prev_sig_txid} and {sig_txid}"
+                    )
 
                 prev_sig_txid = sig_txid
 
@@ -144,25 +144,22 @@ def check_all_tables_are_documented(table_names_in_ledger, doc_path):
     table_names = [tn for tn in table_names if tn not in experimental_table_names]
     experimental_table_names = [tn.split(" ")[0] for tn in experimental_table_names]
 
-    experimental_table_names_in_ledger = [
+    if experimental_table_names_in_ledger := [
         tn for tn in table_names_in_ledger if tn in experimental_table_names
-    ]
-    if experimental_table_names_in_ledger:
+    ]:
         raise ValueError(
             f"Experimental tables {experimental_table_names_in_ledger} were present in ledger"
         )
 
-    public_table_names_in_ledger = set(
-        [tn for tn in table_names_in_ledger if tn.startswith("public:ccf.")]
-    )
+    public_table_names_in_ledger = {
+        tn for tn in table_names_in_ledger if tn.startswith("public:ccf.")
+    }
     undocumented_tables = public_table_names_in_ledger - set(table_names)
     assert undocumented_tables == set(), undocumented_tables
 
 
 def remove_prefix(s, prefix):
-    if s.startswith(prefix):
-        return s[len(prefix) :]
-    return s
+    return s[len(prefix) :] if s.startswith(prefix) else s
 
 
 def check_all_tables_have_wrapper_endpoints(table_names, node):
@@ -179,7 +176,7 @@ def check_all_tables_have_wrapper_endpoints(table_names, node):
                     missing.append(table_name)
 
     assert (
-        len(missing) == 0
+        not missing
     ), f"Missing endpoints to access the following tables: {missing}"
 
 
@@ -203,9 +200,6 @@ def test_ledger_is_readable(network, args):
         ledger_dirs = node.remote.ledger_paths()
         LOG.info(f"Reading ledger from {ledger_dirs}")
         ledger = ccf.ledger.Ledger(ledger_dirs)
-        for chunk in ledger:
-            for _ in chunk:
-                pass
     return network
 
 

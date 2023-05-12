@@ -11,9 +11,9 @@ def ccall(*args, path=None, log_output=True, env=None):
     LOG.info(f"{cmd}{suffix}")
     result = run(args, capture_output=True, cwd=path, check=False, env=env)
     if result.stdout and log_output:
-        LOG.debug("stdout: {}".format(result.stdout.decode().strip()))
+        LOG.debug(f"stdout: {result.stdout.decode().strip()}")
     if result.stderr and log_output:
-        LOG.error("stderr: {}".format(result.stderr.decode().strip()))
+        LOG.error(f"stderr: {result.stderr.decode().strip()}")
     return result
 
 

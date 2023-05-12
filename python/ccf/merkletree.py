@@ -14,13 +14,11 @@ class MerkleTree(object):
         self.reset_tree()
 
     def reset_tree(self):
-        self.leaves = list()
+        self.leaves = []
         self.levels = None
 
     def add_leaf(self, values: bytes, do_hash=True):
-        digest = values
-        if do_hash:
-            digest = sha256(values).digest()
+        digest = sha256(values).digest() if do_hash else values
         self.leaves.append(digest)
 
     def get_leaf(self, index: int) -> bytes:
@@ -54,12 +52,13 @@ class MerkleTree(object):
             solo_leaf = self.levels[0][-1]
             number_of_leaves_on_current_level -= 1
 
-        new_level = []
-        for left_node, right_node in zip(
-            self.levels[0][0:number_of_leaves_on_current_level:2],
-            self.levels[0][1:number_of_leaves_on_current_level:2],
-        ):
-            new_level.append(sha256(left_node + right_node).digest())
+        new_level = [
+            sha256(left_node + right_node).digest()
+            for left_node, right_node in zip(
+                self.levels[0][:number_of_leaves_on_current_level:2],
+                self.levels[0][1:number_of_leaves_on_current_level:2],
+            )
+        ]
         if solo_leaf is not None:
             new_level.append(solo_leaf)
         self.levels = [

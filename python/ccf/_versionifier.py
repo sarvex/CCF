@@ -9,9 +9,7 @@ from setuptools.extern.packaging.version import (  # type: ignore
 
 
 def remove_prefix(s, prefix):
-    if s.startswith(prefix):
-        return s[len(prefix) :]
-    return s
+    return s[len(prefix) :] if s.startswith(prefix) else s
 
 
 def replace_char(s, n, c):
@@ -29,8 +27,7 @@ def to_python_version(original):
     plus_remover = str.maketrans({ord("+"): ""})
     while True:
         try:
-            version = Version(next_attempt)
-            return version
+            return Version(next_attempt)
         except InvalidVersion:
             next_replace = unprefixed.rfind("-", 0, next_replace)
             if next_replace == -1:

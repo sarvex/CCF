@@ -128,10 +128,7 @@ class LoggingTxs:
             f"Applying {number_txs} logging txs to node {remote_node.local_node_id}"
         )
 
-        headers = None
-        if not user:
-            headers = self._get_headers_base()
-
+        headers = self._get_headers_base() if not user else None
         with remote_node.client(user or self.user) as c:
             check_commit = infra.checker.Checker(c)
 
@@ -154,9 +151,9 @@ class LoggingTxs:
                     url = "/app/log/private"
                     url = private_url if private_url else url
                     if url_suffix:
-                        url += "/" + url_suffix
+                        url += f"/{url_suffix}"
                     if self.scope is not None:
-                        url += "?scope=" + self.scope
+                        url += f"?scope={self.scope}"
                     rep_priv = c.post(
                         url,
                         args,
@@ -187,9 +184,9 @@ class LoggingTxs:
                     }
                     url = "/app/log/public"
                     if url_suffix:
-                        url += "/" + url_suffix
+                        url += f"/{url_suffix}"
                     if self.scope is not None:
-                        url += "?scope=" + self.scope
+                        url += f"?scope={self.scope}"
                     if record_claim:
                         payload["record_claim"] = True
                     rep_pub = c.post(
@@ -283,8 +280,9 @@ class LoggingTxs:
                             {"msg": e["msg"], "seqno": e["seqno"]} for e in entries
                         ]
 
-                        diff = [e for e in stored_entries if e not in returned_entries]
-                        if diff:
+                        if diff := [
+                            e for e in stored_entries if e not in returned_entries
+                        ]:
                             raise ValueError(
                                 f"These recorded public entries were not returned by historical range endpoint for idx {idx}: {diff}"
                             )
@@ -419,7 +417,7 @@ class LoggingTxs:
 
         url = f"{cmd}?id={idx}"
         if scope is not None:
-            url += "&scope=" + scope
+            url += f"&scope={scope}"
 
         found = False
         start_time = time.time()
@@ -434,7 +432,7 @@ class LoggingTxs:
                     expected_result = {"msg": msg}
                     assert (
                         rep.body.json() == expected_result
-                    ), "Expected {}, got {}".format(expected_result, rep.body)
+                    ), f"Expected {expected_result}, got {rep.body}"
                     found = True
                     break
                 elif rep.status_code == http.HTTPStatus.NOT_FOUND:
@@ -517,7 +515,7 @@ class LoggingTxs:
             table = "private" if priv else "public"
             url = f"/app/log/{table}?id={log_id}"
             if self.scope is not None:
-                url += "&scope=" + self.scope
+                url += f"&scope={self.scope}"
             wait_point = c.delete(
                 url, headers=None if user else self._get_headers_base()
             )
@@ -537,10 +535,10 @@ class LoggingTxs:
             table = "private" if priv else "public"
             url = f"/app/log/{table}"
             if url_suffix:
-                url += "/" + url_suffix
+                url += f"/{url_suffix}"
             url += f"?id={log_id}"
             if self.scope is not None:
-                url += "&scope=" + self.scope
+                url += f"&scope={self.scope}"
             return c.get(url, headers=None if user else self._get_headers_base())
 
     def post_raw_text(self, log_id, msg, log_capture=None, user=None):
@@ -548,7 +546,7 @@ class LoggingTxs:
         with primary.client(user or self.user) as c:
             url = f"/app/log/private/raw_text/{log_id}"
             if self.scope is not None:
-                url += "?scope=" + self.scope
+                url += f"?scope={self.scope}"
             headers = {"content-type": "text/plain"}
             if not user:
                 headers = {**headers, **self._get_headers_base()}
@@ -597,10 +595,7 @@ def scoped_txs(identity="user0", verify=False):
         def get_count(client, headers, scope, private=False):
             table = "private" if private else "public"
             r = client.get(f"/app/log/{table}/count?scope={scope}", headers=headers)
-            if r.status_code == http.HTTPStatus.OK:
-                return int(r.body.json())
-            else:
-                return None
+            return int(r.body.json()) if r.status_code == http.HTTPStatus.OK else None
 
         def get_fresh_scope(node, identity, headers, attempts=5):
             prefix = func.__name__

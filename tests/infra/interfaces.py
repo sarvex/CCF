@@ -16,10 +16,7 @@ def split_netloc(netloc, default_port=0):
 
 
 def make_address(host, port=0):
-    if ":" in host:
-        return f"[{host}]:{port}"
-    else:
-        return f"{host}:{port}"
+    return f"[{host}]:{port}" if ":" in host else f"{host}:{port}"
 
 
 DEFAULT_TRANSPORT_PROTOCOL = "tcp"
@@ -112,13 +109,11 @@ class RPCInterface(Interface):
             "max_headers_count": interface.max_http_headers_count,
         }
         if interface.app_protocol == AppProtocol.HTTP2:
-            http_config.update(
-                {
-                    "max_concurrent_streams_count": interface.max_concurrent_streams_count,
-                    "initial_window_size": str(interface.initial_window_size),
-                    "max_frame_size": str(interface.max_frame_size),
-                }
-            )
+            http_config |= {
+                "max_concurrent_streams_count": interface.max_concurrent_streams_count,
+                "initial_window_size": str(interface.initial_window_size),
+                "max_frame_size": str(interface.max_frame_size),
+            }
         r = {
             "bind_address": make_address(interface.host, interface.port),
             "protocol": f"{interface.transport}",

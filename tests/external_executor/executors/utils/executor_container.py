@@ -141,8 +141,8 @@ class ExecutorContainer:
             # Hardcoded for logging app until there is an endpoint to find out which
             # executors are registered
             end_time = time.time() + timeout
+            path = "/log/public"
             while time.time() < end_time:
-                path = "/log/public"
                 r = client.get(path)
                 try:
                     assert r.body.json()["error"]["message"] == f"Unknown path: {path}."
@@ -151,7 +151,6 @@ class ExecutorContainer:
                     return
                 else:
                     time.sleep(0.1)
-                    continue
         raise TimeoutError(f"Executor did not register within {timeout} seconds")
 
     def terminate(self):

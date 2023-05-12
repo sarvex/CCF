@@ -54,11 +54,12 @@ def get_network_health(network, get_primary_fn, client_node_timeout_s=3, verbose
     # Number of nodes required for network to commit new transactions
     majority = (len(nodes) // 2) + 1
 
-    primaries = {}
-    for node in nodes:
-        primaries[node.node_id] = get_primary_fn(
+    primaries = {
+        node.node_id: get_primary_fn(
             node, client_node_timeout_s, verbose=verbose
         )
+        for node in nodes
+    }
     assert len(primaries) == len(nodes)
 
     # Count how many (primary nodes, views) are reported by all nodes in

@@ -68,9 +68,8 @@ class CmdMixin(object):
         pattern = "=> (.*)tx/s"
         for line in lines:
             LOG.debug(line.decode())
-            res = re.search(pattern, line.decode())
-            if res:
-                return float(res.group(1))
+            if res := re.search(pattern, line.decode()):
+                return float(res[1])
         raise ValueError(f"No performance result found (pattern is {pattern})")
 
 
@@ -129,24 +128,24 @@ class SSHRemote(CmdMixin):
         return addr
 
     def _rc(self, cmd):
-        LOG.info("[{}] {}".format(self.hostname, cmd))
+        LOG.info(f"[{self.hostname}] {cmd}")
         _, stdout, _ = self.client.exec_command(cmd)
         return stdout.channel.recv_exit_status()
 
     def _connect(self):
-        LOG.debug("[{}] connect".format(self.hostname))
+        LOG.debug(f"[{self.hostname}] connect")
         self.client.connect(self.hostname)
         self.proc_client.connect(self.hostname)
 
     def _setup_files(self):
-        assert self._rc("rm -rf {}".format(self.root)) == 0
-        assert self._rc("mkdir -p {}".format(self.root)) == 0
+        assert self._rc(f"rm -rf {self.root}") == 0
+        assert self._rc(f"mkdir -p {self.root}") == 0
         # For SSHRemote, both executable files (host and enclave) and data
         # files (ledger, secrets) are copied to the remote
         session = self.client.open_sftp()
         for path in self.exe_files:
             tgt_path = os.path.join(self.root, os.path.basename(path))
-            LOG.info("[{}] copy {} from {}".format(self.hostname, tgt_path, path))
+            LOG.info(f"[{self.hostname}] copy {tgt_path} from {path}")
             session.put(path, tgt_path)
             stat = os.stat(path)
             session.chmod(tgt_path, stat.st_mode)
@@ -158,7 +157,7 @@ class SSHRemote(CmdMixin):
                     session.put(os.path.join(path, f), os.path.join(tgt_path, f))
             else:
                 session.put(path, tgt_path)
-            LOG.info("[{}] copy {} from {}".format(self.hostname, tgt_path, path))
+            LOG.info(f"[{self.hostname}] copy {tgt_path} from {path}")
         session.close()
 
     def get(
@@ -206,9 +205,7 @@ class SSHRemote(CmdMixin):
                             os.path.join(dst_path, target_name),
                         )
                     LOG.debug(
-                        "[{}] found {} after {}s".format(
-                            self.hostname, file_name, int(time.time() - start_time)
-                        )
+                        f"[{self.hostname}] found {file_name} after {int(time.time() - start_time)}s"
                     )
                     break
                 except FileNotFoundError:
@@ -236,21 +233,17 @@ class SSHRemote(CmdMixin):
         with sftp_session(self.hostname) as session:
             for filepath in (self.err, self.out):
                 try:
-                    local_file_name = "{}_{}_{}".format(
-                        self.hostname, self.name, os.path.basename(filepath)
-                    )
+                    local_file_name = f"{self.hostname}_{self.name}_{os.path.basename(filepath)}"
                     dst_path = os.path.join(self.common_dir, local_file_name)
                     session.get(filepath, dst_path)
-                    LOG.info("Downloaded {}".format(dst_path))
+                    LOG.info(f"Downloaded {dst_path}")
                 except FileNotFoundError:
                     LOG.warning(
-                        "Failed to download {} to {} (host: {})".format(
-                            filepath, dst_path, self.hostname
-                        )
+                        f"Failed to download {filepath} to {dst_path} (host: {self.hostname})"
                     )
         return os.path.join(
-            self.common_dir, "{}_{}_out".format(self.hostname, self.name)
-        ), os.path.join(self.common_dir, "{}_{}_err".format(self.hostname, self.name))
+            self.common_dir, f"{self.hostname}_{self.name}_out"
+        ), os.path.join(self.common_dir, f"{self.hostname}_{self.name}_err")
 
     def start(self):
         """
@@ -260,7 +253,7 @@ class SSHRemote(CmdMixin):
         get a SIGHUP on disconnection.
         """
         cmd = self.get_cmd()
-        LOG.info("[{}] {}".format(self.hostname, cmd))
+        LOG.info(f"[{self.hostname}] {cmd}")
         self.client.exec_command(cmd, get_pty=True)
         self.pid()
 
@@ -270,8 +263,7 @@ class SSHRemote(CmdMixin):
             time_left = 3
             while time_left > 0:
                 _, stdout, _ = self.proc_client.exec_command(f'cat "{pid_path}"')
-                res = stdout.read().strip()
-                if res:
+                if res := stdout.read().strip():
                     self._pid = int(res)
                     break
                 time_left = max(time_left - 0.1, 0)
@@ -299,7 +291,7 @@ class SSHRemote(CmdMixin):
         """
         Disconnect the client, and therefore shut down the command as well.
         """
-        LOG.info("[{}] closing".format(self.hostname))
+        LOG.info(f"[{self.hostname}] closing")
         self.client.close()
         self.proc_client.close()
 
@@ -385,26 +377,26 @@ class LocalRemote(CmdMixin):
         return addr
 
     def _rc(self, cmd):
-        LOG.info("[{}] {}".format(self.hostname, cmd))
+        LOG.info(f"[{self.hostname}] {cmd}")
         return subprocess.call(cmd, shell=True)
 
     def cp(self, src_path, dst_path):
         if os.path.isdir(src_path):
-            assert self._rc("rm -rf {}".format(os.path.join(dst_path))) == 0
-            assert self._rc("cp -r {} {}".format(src_path, dst_path)) == 0
+            assert self._rc(f"rm -rf {os.path.join(dst_path)}") == 0
+            assert self._rc(f"cp -r {src_path} {dst_path}") == 0
         else:
-            assert self._rc("cp {} {}".format(src_path, dst_path)) == 0
+            assert self._rc(f"cp {src_path} {dst_path}") == 0
 
     def _setup_files(self, use_links: bool):
-        assert self._rc("rm -rf {}".format(self.root)) == 0
-        assert self._rc("mkdir -p {}".format(self.root)) == 0
+        assert self._rc(f"rm -rf {self.root}") == 0
+        assert self._rc(f"mkdir -p {self.root}") == 0
         for path in self.exe_files:
             dst_path = os.path.normpath(os.path.join(self.root, os.path.basename(path)))
             src_path = os.path.normpath(os.path.join(os.getcwd(), path))
             if use_links:
-                assert self._rc("ln -s {} {}".format(src_path, dst_path)) == 0
+                assert self._rc(f"ln -s {src_path} {dst_path}") == 0
             else:
-                assert self._rc("cp {} {}".format(src_path, dst_path)) == 0
+                assert self._rc(f"cp {src_path} {dst_path}") == 0
         for path in self.data_files:
             if len(path) > 0:
                 dst_path = os.path.join(self.root, os.path.basename(path))
@@ -505,7 +497,7 @@ class LocalRemote(CmdMixin):
         """
         Disconnect the client, and therefore shut down the command as well.
         """
-        LOG.info("[{}] closing".format(self.hostname))
+        LOG.info(f"[{self.hostname}] closing")
         if self.proc:
             self.proc.terminate()
             timeout = 10

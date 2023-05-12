@@ -262,8 +262,8 @@ def test_streaming(network, args):
             ops.append(op)
             expected_results.append(expected_result)
 
-        for actual_result in stub.RunOps(op for op in ops):
-            assert len(expected_results) > 0, "More responses than requests"
+        for actual_result in stub.RunOps(iter(ops)):
+            assert expected_results, "More responses than requests"
             expected_result = expected_results.pop(0)
             if expected_result is None:
                 assert not actual_result.HasField("result"), actual_result
@@ -274,7 +274,7 @@ def test_streaming(network, args):
                     actual == expected
                 ), f"Wrong {field_name} op: {actual} != {expected}"
 
-        assert len(expected_results) == 0, "Fewer responses than requests"
+        assert not expected_results, "Fewer responses than requests"
 
     with grpc.secure_channel(
         target=primary.get_public_rpc_address(),
@@ -466,9 +466,9 @@ def test_logging_executor(network, args):
 
     with executor_thread(executor):
         with primary.client() as c:
-            log_id = 42
             log_msg = "Hello world"
 
+            log_id = 42
             r = c.post("/log/public", {"id": log_id, "msg": log_msg})
             assert r.status_code == 200
 
@@ -495,11 +495,7 @@ def test_logging_executor(network, args):
                     success_msg = log_msg
                     break
                 elif r.status_code == http.HTTPStatus.NOT_FOUND:
-                    error_msg = (
-                        "Only committed transactions can be queried. Transaction "
-                        + tx_id
-                        + " is Pending"
-                    )
+                    error_msg = f"Only committed transactions can be queried. Transaction {tx_id} is Pending"
                     assert r.body.text() == error_msg
                     time.sleep(0.1)
                     continue

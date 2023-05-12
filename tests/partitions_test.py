@@ -25,29 +25,20 @@ from loguru import logger as LOG
 def test_invalid_partitions(network, args):
     nodes = network.get_joined_nodes()
 
-    try:
+    with contextlib.suppress(ValueError):
         network.partitioner.partition(
             [nodes[0], nodes[2]],
             [nodes[1], nodes[2]],
         )
         assert False, "Node should not appear in two or more partitions"
-    except ValueError:
-        pass
-
-    try:
+    with contextlib.suppress(ValueError):
         network.partitioner.partition()
         assert False, "At least one partition should be specified"
-    except ValueError:
-        pass
-
-    try:
+    with contextlib.suppress(ValueError):
         invalid_local_node_id = -1
         new_node = infra.node.Node(invalid_local_node_id, "local://localhost")
         network.partitioner.partition([new_node])
         assert False, "All nodes should belong to network"
-    except ValueError:
-        pass
-
     return network
 
 
@@ -152,12 +143,11 @@ def test_isolate_primary_from_one_backup(network, args):
             acks = c.get("/node/consensus", log_capture=[]).body.json()["details"][
                 "acks"
             ]
-            delayed_acks = [
+            if delayed_acks := [
                 ack
                 for ack in acks.values()
                 if ack["last_received_ms"] > args.election_timeout_ms
-            ]
-            if delayed_acks:
+            ]:
                 raise RuntimeError(f"New primary reported some delayed acks: {acks}")
         time.sleep(0.1)
 
@@ -374,7 +364,7 @@ def test_election_reconfiguration(network, args):
                 host="localhost"
             )
         }
-        rpc_interfaces.update(infra.interfaces.make_secondary_interface())
+        rpc_interfaces |= infra.interfaces.make_secondary_interface()
         new_node = network.create_node(infra.interfaces.HostSpec(rpc_interfaces))
         network.join_node(new_node, args.package, args, from_snapshot=False)
         new_nodes.append(new_node)

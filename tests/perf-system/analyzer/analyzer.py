@@ -195,7 +195,7 @@ class Analyze:
         plt.savefig("posted_vs_committed.png")
 
     def plot_latency_by_id(self, df_sends: pd.DataFrame) -> None:
-        id_unit = [x for x in range(0, len(df_sends.index))]
+        id_unit = list(range(0, len(df_sends.index)))
         lat_unit = self.ms_latency_list
         plt.figure()
         plt.scatter(id_unit, lat_unit, s=1)

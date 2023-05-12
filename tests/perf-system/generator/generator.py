@@ -30,7 +30,7 @@ class Messages:
 
         headers = {}
         if additional_headers is not None:
-            headers.update({k.lower(): v for k, v in additional_headers.items()})
+            headers |= {k.lower(): v for k, v in additional_headers.items()}
 
         # Insert content-length, and content-type headers, if they're not already present
         if "content-length" not in headers:

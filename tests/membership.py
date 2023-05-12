@@ -92,10 +92,10 @@ def test_set_recovery_threshold(network, args, recovery_threshold=None):
 def assert_recovery_shares_update(are_shared_updated, func, network, args, **kwargs):
     primary, _ = network.find_primary()
 
-    saved_recovery_shares = {}
-    for m in network.consortium.get_active_recovery_members():
-        saved_recovery_shares[m] = m.get_and_decrypt_recovery_share(primary)
-
+    saved_recovery_shares = {
+        m: m.get_and_decrypt_recovery_share(primary)
+        for m in network.consortium.get_active_recovery_members()
+    }
     if func is test_remove_member:
         recovery_member = kwargs.pop("recovery_member")
         member_to_remove = network.consortium.get_any_active_member(

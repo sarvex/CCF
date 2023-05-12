@@ -67,9 +67,10 @@ def verify_endorsements_openssl(service_cert, receipt):
     store.add_cert(X509.from_cryptography(service_cert))
     chain = None
     if "service_endorsements" in receipt:
-        chain = []
-        for endo in receipt["service_endorsements"]:
-            chain.append(load_certificate(FILETYPE_PEM, endo.encode()))
+        chain = [
+            load_certificate(FILETYPE_PEM, endo.encode())
+            for endo in receipt["service_endorsements"]
+        ]
     node_cert_pem = receipt["cert"].encode()
     ctx = X509StoreContext(store, load_certificate(FILETYPE_PEM, node_cert_pem), chain)
     ctx.verify_certificate()  # (throws on error)
@@ -628,13 +629,13 @@ def test_multi_auth(network, args):
         jwt = jwt_issuer.issue_jwt(claims={"user": "Alice"})
 
         with primary.client() as c:
-            r = c.get("/app/multi_auth", headers={"authorization": "Bearer " + jwt})
+            r = c.get("/app/multi_auth", headers={"authorization": f"Bearer {jwt}"})
             require_new_response(r)
 
         LOG.info("Authenticate via second JWT token")
         jwt2 = jwt_issuer.issue_jwt(claims={"user": "Bob"})
 
-        with primary.client(common_headers={"authorization": "Bearer " + jwt2}) as c:
+        with primary.client(common_headers={"authorization": f"Bearer {jwt2}"}) as c:
             r = c.get("/app/multi_auth")
             require_new_response(r)
 
@@ -1369,9 +1370,10 @@ class SentTxs:
             # Only valid transitions from Unknown to any, or Pending to Committed/Invalid
             if current_status == TxStatus.Unknown:
                 valid = True
-            elif current_status == TxStatus.Pending and (
-                status == TxStatus.Committed or status == TxStatus.Invalid
-            ):
+            elif current_status == TxStatus.Pending and status in [
+                TxStatus.Committed,
+                TxStatus.Invalid,
+            ]:
                 valid = True
 
             if valid:
@@ -1589,9 +1591,7 @@ def test_udp_echo(network, args):
     buffer_size = 1024
     test_string = b"Some random text"
     attempts = 10
-    attempt = 1
-
-    while attempt <= attempts:
+    for _ in range(1, attempts + 1):
         LOG.info(f"Testing UDP echo server sending '{test_string}'")
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
             s.settimeout(3)
@@ -1600,7 +1600,6 @@ def test_udp_echo(network, args):
         text = recv[0]
         LOG.info(f"Testing UDP echo server received '{text}'")
         assert text == test_string
-        attempt = attempt + 1
 
 
 @reqs.description("Check post-local-commit failure handling")

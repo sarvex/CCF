@@ -164,12 +164,13 @@ class Node:
                         else infra.remote.LocalRemote
                     )
                     # Node client address does not currently work with DockerRemote
-                    if not requires_docker_remote:
-                        if not self.major_version or self.major_version > 1:
-                            self.node_client_host = str(
-                                ipaddress.ip_address(BASE_NODE_CLIENT_HOST)
-                                + self.local_node_id
-                            )
+                    if not requires_docker_remote and (
+                        not self.major_version or self.major_version > 1
+                    ):
+                        self.node_client_host = str(
+                            ipaddress.ip_address(BASE_NODE_CLIENT_HOST)
+                            + self.local_node_id
+                        )
                 elif rpc_interface.protocol == "ssh":
                     if requires_docker_remote:
                         raise ValueError(
@@ -279,9 +280,9 @@ class Node:
             lib_name, enclave_type, enclave_platform, library_dir=self.library_dir
         )
         self.common_dir = common_dir
-        members_info = members_info or []
         self.label = label
 
+        members_info = members_info or []
         self.remote = infra.remote.CCFRemote(
             start_type,
             lib_path,
@@ -316,9 +317,7 @@ class Node:
 
             print("")
             print(
-                "================= Please run the below command on "
-                + self.get_public_rpc_host()
-                + " and press enter to continue ================="
+                f"================= Please run the below command on {self.get_public_rpc_host()} and press enter to continue ================="
             )
             print("")
             print(self.remote.debug_node_cmd())
@@ -432,7 +431,7 @@ class Node:
                         assert (
                             rpc_port == rpc_interface.port
                         ), f"Unexpected change in RPC port from {rpc_interface.port} to {rpc_port}"
-                    rpc_interface.port = int(rpc_port)
+                    rpc_interface.port = rpc_port
                     # In the infra, public RPC port is always the same as local RPC port
                     rpc_interface.public_port = rpc_interface.port
 
@@ -445,9 +444,7 @@ class Node:
             self.remote.stop()
 
     def get_logs(self):
-        if self.remote is not None:
-            return self.remote.get_logs()
-        return None, None
+        return self.remote.get_logs() if self.remote is not None else (None, None)
 
     def sigterm(self):
         self.remote.sigterm()
@@ -639,9 +636,7 @@ class Node:
             == infra.interfaces.EndorsementAuthority.Node,
             verify_ca=verify_ca,
         )
-        akwargs["protocol"] = (
-            kwargs.get("protocol") if "protocol" in kwargs else "https"
-        )
+        akwargs["protocol"] = kwargs.get("protocol", "https")
         if rpc_interface.app_protocol == infra.interfaces.AppProtocol.HTTP2:
             akwargs["http1"] = False
             akwargs["http2"] = True
@@ -772,17 +767,16 @@ class Node:
                     LOG.warning("Frontend is not yet open")
                     continue
 
-                if rep.status_code == http.HTTPStatus.ACCEPTED:
-                    retry_after = rep.headers.get("retry-after")
-                    if retry_after is None:
-                        raise ValueError(
-                            f"Response with status {rep.status_code} is missing 'retry-after' header"
-                        )
-                else:
+                if rep.status_code != http.HTTPStatus.ACCEPTED:
                     raise ValueError(
                         f"Unexpected response status code {rep.status_code}: {rep.body}"
                     )
 
+                retry_after = rep.headers.get("retry-after")
+                if retry_after is None:
+                    raise ValueError(
+                        f"Response with status {rep.status_code} is missing 'retry-after' header"
+                    )
                 time.sleep(0.1)
 
         if not found:

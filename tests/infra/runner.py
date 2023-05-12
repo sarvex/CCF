@@ -23,10 +23,7 @@ logging.getLogger("paramiko").setLevel(logging.WARNING)
 
 
 def minimum_number_of_local_nodes(args):
-    if args.send_tx_to == "backups":
-        return 2
-
-    return 1
+    return 2 if args.send_tx_to == "backups" else 1
 
 
 def get_command_args(args, get_command):
@@ -52,7 +49,7 @@ def configure_remote_client(args, client_id, client_host, node, command_args):
         remote_impl = infra.remote.SSHRemote
     try:
         remote_client = infra.remote_client.CCFRemoteClient(
-            "client_" + str(client_id),
+            f"client_{str(client_id)}",
             client_host,
             args.client,
             node.get_public_rpc_host(),
@@ -66,7 +63,7 @@ def configure_remote_client(args, client_id, client_host, node, command_args):
         remote_client.setup()
         return remote_client
     except Exception:
-        LOG.exception("Failed to start client {}".format(client_host))
+        LOG.exception(f"Failed to start client {client_host}")
         raise
 
 
@@ -82,11 +79,11 @@ def run(get_command, args):
     args.sig_ms_interval = 1000  # Set to cchost default value
     args.ledger_chunk_bytes = "5MB"  # Set to cchost default value
 
-    LOG.info("Starting nodes on {}".format(hosts))
+    LOG.info(f"Starting nodes on {hosts}")
 
     with infra.network.network(
-        hosts, args.binary_dir, args.debug_nodes, args.perf_nodes, pdb=args.pdb
-    ) as network:
+            hosts, args.binary_dir, args.debug_nodes, args.perf_nodes, pdb=args.pdb
+        ) as network:
         network.start_and_open(args)
         primary, backups = network.find_nodes()
 
@@ -104,9 +101,8 @@ def run(get_command, args):
         if args.one_client_per_backup:
             assert backups, "--one-client-per-backup was set but no backup was found"
             client_hosts = ["localhost"] * len(backups)
-        else:
-            if args.client_nodes:
-                client_hosts.extend(args.client_nodes)
+        elif args.client_nodes:
+            client_hosts.extend(args.client_nodes)
 
         if args.num_localhost_clients:
             client_hosts.extend(["localhost"] * int(args.num_localhost_clients))

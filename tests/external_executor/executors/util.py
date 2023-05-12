@@ -13,7 +13,7 @@ class ExecutorThread:
         self.activated_event = None
 
     def start(self):
-        assert self.thread == None, "Already started"
+        assert self.thread is None, "Already started"
         LOG.info("Starting executor")
         self.activated_event = threading.Event()
         self.thread = threading.Thread(

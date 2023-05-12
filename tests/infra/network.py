@@ -132,7 +132,7 @@ def log_errors(
             for line in tail_lines:
                 LOG.info(line)
     except IOError:
-        LOG.exception("Could not check output {} for errors".format(out_path))
+        LOG.exception(f"Could not check output {out_path} for errors")
 
     fatal_error_lines = []
     try:
@@ -145,7 +145,7 @@ def log_errors(
             if fatal_error_lines:
                 LOG.error(f"Contents of {err_path}:\n{''.join(fatal_error_lines)}")
     except IOError:
-        LOG.exception("Could not read err output {}".format(err_path))
+        LOG.exception(f"Could not read err output {err_path}")
 
     # See https://github.com/microsoft/CCF/issues/1701
     ignore_fatal_errors = False
@@ -369,10 +369,7 @@ class Network:
         )
 
         # If the network is opening or recovering, nodes are trusted without consortium approval
-        if (
-            self.status == ServiceStatus.OPENING
-            or self.status == ServiceStatus.RECOVERING
-        ):
+        if self.status in [ServiceStatus.OPENING, ServiceStatus.RECOVERING]:
             try:
                 node.wait_for_node_to_join(timeout=JOIN_TIMEOUT)
             except TimeoutError:
@@ -544,9 +541,7 @@ class Network:
     def open(self, args):
         def get_target_node(args, primary):
             # HTTP/2 does not currently support forwarding
-            if args.http2:
-                return primary
-            return self.find_random_node()
+            return primary if args.http2 else self.find_random_node()
 
         primary, _ = self.find_primary()
         self.consortium.activate(get_target_node(args, primary))
@@ -1006,7 +1001,7 @@ class Network:
             with node.client() as c:
                 logs = []
                 r = c.get("/app/commit", log_capture=logs)
-                if not (r.status_code == http.HTTPStatus.NOT_FOUND.value):
+                if r.status_code != http.HTTPStatus.NOT_FOUND.value:
                     flush_info(logs, None)
                     return
                 time.sleep(0.1)
@@ -1122,7 +1117,7 @@ class Network:
         end_time = time.time() + timeout
 
         # If no TxID is specified, retrieve latest readable one
-        if tx_id == None:
+        if tx_id is None:
             while time.time() < end_time:
                 with primary.client() as c:
                     resp = c.get("/node/state")  # Well-known read-only endpoint
@@ -1156,9 +1151,6 @@ class Network:
                         raise RuntimeError(
                             f"Node {node.node_id} reports transaction ID {tx_id} is invalid and will never be committed"
                         )
-                    else:
-                        pass
-
             if len(caught_up_nodes) == len(self.get_joined_nodes()):
                 break
             time.sleep(0.1)
@@ -1440,10 +1432,9 @@ class Network:
     @functools.cached_property
     def cert(self):
         with open(self.cert_path, encoding="utf-8") as c:
-            service_cert = load_pem_x509_certificate(
+            return load_pem_x509_certificate(
                 c.read().encode("ascii"), default_backend()
             )
-            return service_cert
 
     def verify_service_certificate_validity_period(self, expected_validity_days):
         primary, _ = self.find_primary()

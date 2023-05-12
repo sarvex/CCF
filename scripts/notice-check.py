@@ -11,10 +11,10 @@ NOTICE_LINES_CCF = [
 ]
 
 PREFIXES_CCF = [
-    os.linesep.join([prefix + " " + line for line in NOTICE_LINES_CCF])
+    os.linesep.join([f"{prefix} {line}" for line in NOTICE_LINES_CCF])
     for prefix in ["//", "--", "#"]
 ]
-PREFIXES_CCF.append("#!/bin/bash" + os.linesep + PREFIXES_CCF[-1])
+PREFIXES_CCF.append(f"#!/bin/bash{os.linesep}{PREFIXES_CCF[-1]}")
 
 
 def has_notice(path, prefixes):
@@ -27,10 +27,10 @@ def has_notice(path, prefixes):
 
 
 def is_src(name):
-    for suffix in [".c", ".cpp", ".h", ".hpp", ".py", ".sh", ".cmake"]:
-        if name.endswith(suffix):
-            return True
-    return False
+    return any(
+        name.endswith(suffix)
+        for suffix in [".c", ".cpp", ".h", ".hpp", ".py", ".sh", ".cmake"]
+    )
 
 
 def submodules():
@@ -59,9 +59,8 @@ def check_ccf():
                 continue
             if is_src(name):
                 path = os.path.join(root, name)
-                if not gitignored(path):
-                    if not has_notice(path, PREFIXES_CCF):
-                        missing.append(path)
+                if not gitignored(path) and not has_notice(path, PREFIXES_CCF):
+                    missing.append(path)
     return missing
 
 

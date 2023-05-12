@@ -119,8 +119,7 @@ class Consortium:
                 member_info = json.loads(info_bytes)
 
                 status = member_info["status"]
-                member = self.get_member_by_service_id(member_id)
-                if member:
+                if member := self.get_member_by_service_id(member_id):
                     if (
                         infra.member.MemberStatus(status)
                         == infra.member.MemberStatus.ACTIVE
@@ -141,13 +140,11 @@ class Consortium:
             "name": proposal_name,
         }
         if kwargs:
-            args = {}
-            for k, v in kwargs.items():
-                if v is not None:
-                    if isinstance(v, datetime.datetime):
-                        args[k] = str(v)
-                    else:
-                        args[k] = v
+            args = {
+                k: str(v) if isinstance(v, datetime.datetime) else v
+                for k, v in kwargs.items()
+                if v is not None
+            }
             action["args"] = args
 
         proposal_body = {"actions": [action]}
@@ -226,10 +223,7 @@ class Consortium:
         return new_member
 
     def get_members_info(self):
-        info = []
-        for m in self.members:
-            info += [m.member_info]
-        return info
+        return [m.member_info for m in self.members]
 
     def get_active_members(self):
         return [member for member in self.members if member.is_active()]
@@ -249,13 +243,12 @@ class Consortium:
         ]
 
     def get_any_active_member(self, recovery_member=None):
-        if recovery_member is not None:
-            if recovery_member == True:
-                return random.choice(self.get_active_recovery_members())
-            elif recovery_member == False:
-                return random.choice(self.get_active_non_recovery_members())
-        else:
+        if recovery_member is None:
             return random.choice(self.get_active_members())
+        if recovery_member == True:
+            return random.choice(self.get_active_recovery_members())
+        elif recovery_member == False:
+            return random.choice(self.get_active_non_recovery_members())
 
     def get_member_by_local_id(self, local_id):
         return next(
@@ -496,7 +489,7 @@ class Consortium:
             metadata = json.load(f)
 
         # sanity checks
-        module_paths = set(module["name"] for module in modules)
+        module_paths = {module["name"] for module in modules}
         for url, methods in metadata["endpoints"].items():
             for method, endpoint in methods.items():
                 module_path = endpoint["js_module"]

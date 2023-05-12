@@ -67,7 +67,7 @@ def find_ledger_chunk_for_seqno(ledger, seqno):
                 and ccf.ledger.SIGNATURE_TX_TABLE_NAME in tables
             ):
                 next_signature = pd.get_seqno()
-        if first <= seqno and seqno <= last:
+        if first <= seqno <= last:
             return chunk, first, last, next_signature
     return None, None, None, None
 

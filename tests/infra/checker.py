@@ -19,18 +19,18 @@ class Checker:
                     rpc_result.status_code, rpc_result.body
                 ), f"{rpc_result.status_code}: {rpc_result.body}"
             else:
-                assert rpc_result.body.text() == error, "Expected {}, got {}".format(
-                    error, rpc_result.body
-                )
+                assert (
+                    rpc_result.body.text() == error
+                ), f"Expected {error}, got {rpc_result.body}"
             return
 
         if result is not None:
             if callable(result):
                 assert result(rpc_result.body), rpc_result.body
             else:
-                assert rpc_result.body.json() == result, "Expected {}, got {}".format(
-                    result, rpc_result.body
-                )
+                assert (
+                    rpc_result.body.json() == result
+                ), f"Expected {result}, got {rpc_result.body}"
 
             assert rpc_result.seqno >= 0 and rpc_result.view >= 0
 

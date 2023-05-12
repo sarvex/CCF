@@ -38,7 +38,7 @@ def node_configs(network):
 
 
 def count_nodes(configs, network):
-    nodes = set(str(k) for k in configs.keys())
+    nodes = {str(k) for k in configs.keys()}
     stopped = {str(n.node_id) for n in network.nodes if n.is_stopped()}
     for node_id, node_config in configs.items():
         nodes_in_config = set(node_config.keys()) - stopped
@@ -510,13 +510,14 @@ def test_issue_fake_join(network, args):
 
     # Assemble dummy join request body
     net = {"bind_address": "0:0"}
-    req = {}
-    req["node_info_network"] = {
-        "node_to_node_interface": net,
-        "rpc_interfaces": {"name": net},
+    req = {
+        "node_info_network": {
+            "node_to_node_interface": net,
+            "rpc_interfaces": {"name": net},
+        },
+        "consensus_type": "CFT",
+        "startup_seqno": 0,
     }
-    req["consensus_type"] = "CFT"
-    req["startup_seqno"] = 0
     with open(
         os.path.join(network.common_dir, "member0_enc_pubk.pem"), "r", encoding="utf-8"
     ) as f:
@@ -885,10 +886,7 @@ def run_join_old_snapshot(args):
 def get_current_nodes_table(network):
     tables, _ = network.get_latest_ledger_public_state()
     tn = "public:ccf.gov.nodes.info"
-    r = {}
-    for nid, info in tables[tn].items():
-        r[nid.decode()] = json.loads(info)
-    return r
+    return {nid.decode(): json.loads(info) for nid, info in tables[tn].items()}
 
 
 if __name__ == "__main__":

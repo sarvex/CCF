@@ -21,11 +21,11 @@ def run(args):
     os.makedirs(args.schema_dir, exist_ok=True)
 
     changed_files = []
-    old_schema = set(
+    old_schema = {
         os.path.join(dir_path, filename)
         for dir_path, _, filenames in os.walk(args.schema_dir)
         for filename in filenames
-    )
+    }
 
     documents_valid = True
     all_methods = []
@@ -122,10 +122,10 @@ def run(args):
 
     made_changes = False
 
-    if len(old_schema) > 0:
+    if old_schema:
         LOG.error("Removing old files which are no longer reported by the service:")
         for f in old_schema:
-            LOG.error(" " + f)
+            LOG.error(f" {f}")
             os.remove(f)
             f_dir = os.path.dirname(f)
             # Remove empty directories too
@@ -134,10 +134,10 @@ def run(args):
                 f_dir = os.path.dirname(f_dir)
         made_changes = True
 
-    if len(changed_files) > 0:
+    if changed_files:
         LOG.error("Found problems with the following schema files:")
         for f in changed_files:
-            LOG.error(" " + f)
+            LOG.error(f" {f}")
         made_changes = True
 
     if args.list_all:
